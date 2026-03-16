@@ -37,7 +37,7 @@ export default async function HelpersPage({
         showSignOut={configured}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+      <div className="space-y-6">
         <TableShell
           title="Helpers"
           description="Search, review, and maintain your helper database."
@@ -58,7 +58,77 @@ export default async function HelpersPage({
             </form>
           }
         >
-          <table className="min-w-full text-left text-sm">
+          <div className="space-y-4 lg:hidden">
+            {helpers.map((helper) => (
+              <article
+                key={helper.id}
+                className="rounded-2xl border border-[var(--color-border)] bg-white/80 p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
+                      {helper.helper_id}
+                    </p>
+                    <h4 className="mt-1 text-lg font-semibold text-slate-900">{helper.name}</h4>
+                  </div>
+                  <Badge
+                    tone={
+                      helper.status === "Available"
+                        ? "success"
+                        : helper.status === "Reserved"
+                          ? "warning"
+                          : "neutral"
+                    }
+                  >
+                    {helper.status}
+                  </Badge>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-600">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Nationality</p>
+                    <p className="mt-1 font-medium text-slate-900">{helper.nationality}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Type</p>
+                    <p className="mt-1 font-medium text-slate-900">{helper.type}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Experience</p>
+                    <p className="mt-1 font-medium text-slate-900">{helper.experience}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Salary</p>
+                    <p className="mt-1 font-medium text-slate-900">{formatCurrency(helper.salary)}</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                  <Link
+                    href={`/helpers?edit=${helper.id}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`}
+                    className={`${buttonClassName("secondary")} w-full sm:w-auto`}
+                  >
+                    Edit
+                  </Link>
+                  <form action={deleteHelperAction} className="w-full sm:w-auto">
+                    <input type="hidden" name="id" value={helper.id} />
+                    <input type="hidden" name="redirect_to" value="/helpers" />
+                    <ConfirmSubmitButton
+                      variant="danger"
+                      type="submit"
+                      className="w-full sm:w-auto"
+                      disabled={!configured}
+                      confirmMessage={`Delete helper ${helper.name}? This cannot be undone.`}
+                    >
+                      Delete
+                    </ConfirmSubmitButton>
+                  </form>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <table className="hidden min-w-full text-left text-sm lg:table">
             <thead className="text-xs uppercase tracking-[0.18em] text-slate-400">
               <tr>
                 {[
@@ -129,7 +199,9 @@ export default async function HelpersPage({
           </table>
         </TableShell>
 
-        <HelperForm helper={helperToEdit} disabled={!configured} />
+        <div className="max-w-4xl">
+          <HelperForm helper={helperToEdit} disabled={!configured} />
+        </div>
       </div>
     </div>
   );

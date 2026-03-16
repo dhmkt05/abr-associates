@@ -78,7 +78,7 @@ export function Sidebar() {
         ) : null}
       </div>
 
-      <aside className="surface hidden min-h-screen w-full max-w-72 flex-col border-r border-[var(--color-border)] p-6 lg:flex">
+      <aside className="surface hidden min-h-screen w-full flex-col border-r border-[var(--color-border)] p-5 xl:p-6 lg:flex">
         <div className="rounded-3xl bg-[var(--color-primary)] p-5 text-white">
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-emerald-100">
             Private Admin

@@ -33,12 +33,69 @@ export default async function FinancePage({
         showSignOut={configured}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+      <div className="space-y-6">
         <TableShell
           title="Finance records"
           description="Profit is stored automatically for cleaner reporting and reconciliation."
         >
-          <table className="min-w-full text-left text-sm">
+          <div className="space-y-4 lg:hidden">
+            {finance.map((record) => (
+              <article
+                key={record.id}
+                className="rounded-2xl border border-[var(--color-border)] bg-white/80 p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                      {formatDate(record.created_at)}
+                    </p>
+                    <h4 className="mt-1 text-lg font-semibold text-slate-900">
+                      {record.deal?.employer?.employer_name}
+                    </h4>
+                  </div>
+                  <p className="text-sm font-semibold text-emerald-700">
+                    {formatCurrency(record.profit)}
+                  </p>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-600">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Received</p>
+                    <p className="mt-1 font-medium text-slate-900">
+                      {formatCurrency(record.amount_received)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Supplier</p>
+                    <p className="mt-1 font-medium text-slate-900">
+                      {formatCurrency(record.supplier_payment)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                  <Link href={`/finance?edit=${record.id}`} className={`${buttonClassName("secondary")} w-full sm:w-auto`}>
+                    Edit
+                  </Link>
+                  <form action={deleteFinanceAction} className="w-full sm:w-auto">
+                    <input type="hidden" name="id" value={record.id} />
+                    <input type="hidden" name="redirect_to" value="/finance" />
+                    <ConfirmSubmitButton
+                      variant="danger"
+                      type="submit"
+                      className="w-full sm:w-auto"
+                      disabled={!configured}
+                      confirmMessage={`Delete the finance record for ${record.deal?.employer?.employer_name}?`}
+                    >
+                      Delete
+                    </ConfirmSubmitButton>
+                  </form>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <table className="hidden min-w-full text-left text-sm lg:table">
             <thead className="text-xs uppercase tracking-[0.18em] text-slate-400">
               <tr>
                 {[
@@ -90,7 +147,9 @@ export default async function FinancePage({
           </table>
         </TableShell>
 
-        <FinanceForm deals={deals} disabled={!configured} record={recordToEdit} />
+        <div className="max-w-4xl">
+          <FinanceForm deals={deals} disabled={!configured} record={recordToEdit} />
+        </div>
       </div>
     </div>
   );

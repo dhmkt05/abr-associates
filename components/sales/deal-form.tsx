@@ -16,6 +16,9 @@ export function DealForm({
   deal?: SalesRow;
 }) {
   const action = deal ? updateDealAction : createDealAction;
+  const hasHelpers = helpers.length > 0;
+  const helperSelectDisabled = disabled || (!deal && !hasHelpers);
+  const submitDisabled = disabled || (!deal && !hasHelpers);
 
   return (
     <Card>
@@ -26,6 +29,11 @@ export function DealForm({
         <p className="text-sm text-slate-500">
           Create a lead and optionally register a new employer on the same form.
         </p>
+        {!hasHelpers && !deal ? (
+          <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Add at least one helper in the Helpers page before creating a sales lead.
+          </p>
+        ) : null}
       </div>
 
       <form action={action} className="mt-5 space-y-4">
@@ -65,13 +73,28 @@ export function DealForm({
           </label>
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">Helper selected</span>
-            <Select name="helper_id" required disabled={disabled} defaultValue={deal?.helper_id}>
+            <Select
+              name="helper_id"
+              required={hasHelpers || Boolean(deal)}
+              disabled={helperSelectDisabled}
+              defaultValue={deal?.helper_id ?? ""}
+            >
+              {!deal ? (
+                <option value="" disabled>
+                  {hasHelpers ? "Select a helper" : "No helpers available yet"}
+                </option>
+              ) : null}
               {helpers.map((helper) => (
                 <option key={helper.id} value={helper.id}>
-                  {helper.name} ({helper.helper_id})
+                  {helper.name} ({helper.helper_id}) · {helper.status}
                 </option>
               ))}
             </Select>
+            {hasHelpers ? (
+              <p className="mt-2 text-xs text-slate-500">
+                Tip: create deals from helpers marked `Available` or `Reserved`.
+              </p>
+            ) : null}
           </label>
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">Sales staff</span>
@@ -115,7 +138,7 @@ export function DealForm({
         <SubmitButton
           label={deal ? "Update lead" : "Create lead"}
           pendingLabel={deal ? "Updating..." : "Creating..."}
-          disabled={disabled}
+          disabled={submitDisabled}
         />
       </form>
     </Card>
