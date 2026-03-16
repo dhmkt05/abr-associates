@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { CheckCircle2, CircleAlert, DatabaseZap, ShieldCheck } from "lucide-react";
 import { TopHeader } from "@/components/layout/top-header";
 import { Card } from "@/components/ui/card";
 import { isSupabaseConfigured } from "@/lib/env";
+
+export const metadata: Metadata = {
+  title: "Settings",
+};
 
 export default function SettingsPage() {
   const configured = isSupabaseConfigured();

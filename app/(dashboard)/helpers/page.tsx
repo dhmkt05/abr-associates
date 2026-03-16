@@ -1,17 +1,23 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { HelperForm } from "@/components/helpers/helper-form";
 import { TopHeader } from "@/components/layout/top-header";
 import { TableShell } from "@/components/table-shell";
-import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { FlashMessage } from "@/components/ui/flash-message";
 import { Input } from "@/components/ui/input";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { deleteHelperAction } from "@/lib/actions";
 import { getHelpers } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formatCurrency, formatDate } from "@/lib/utils";
+
+export const metadata: Metadata = {
+  title: "Helpers",
+};
 
 export default async function HelpersPage({
   searchParams,
@@ -58,6 +64,13 @@ export default async function HelpersPage({
             </form>
           }
         >
+          {helpers.length === 0 ? (
+            <EmptyState
+              title="No helpers available"
+              description="Add your first helper profile to start matching candidates with employer leads."
+            />
+          ) : (
+          <>
           <div className="space-y-4 lg:hidden">
             {helpers.map((helper) => (
               <article
@@ -71,17 +84,7 @@ export default async function HelpersPage({
                     </p>
                     <h4 className="mt-1 text-lg font-semibold text-slate-900">{helper.name}</h4>
                   </div>
-                  <Badge
-                    tone={
-                      helper.status === "Available"
-                        ? "success"
-                        : helper.status === "Reserved"
-                          ? "warning"
-                          : "neutral"
-                    }
-                  >
-                    {helper.status}
-                  </Badge>
+                  <StatusBadge status={helper.status} />
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-600">
@@ -150,7 +153,7 @@ export default async function HelpersPage({
             </thead>
             <tbody>
               {helpers.map((helper) => (
-                <tr key={helper.id} className="border-t border-[var(--color-border)] text-slate-700">
+                <tr key={helper.id} className="border-t border-[var(--color-border)] text-slate-700 transition hover:bg-slate-50/80">
                   <td className="px-3 py-4 font-semibold text-slate-900">{helper.helper_id}</td>
                   <td className="px-3 py-4">{helper.name}</td>
                   <td className="px-3 py-4">{helper.nationality}</td>
@@ -158,17 +161,7 @@ export default async function HelpersPage({
                   <td className="px-3 py-4">{helper.experience}</td>
                   <td className="px-3 py-4">{formatCurrency(helper.salary)}</td>
                   <td className="px-3 py-4">
-                    <Badge
-                      tone={
-                        helper.status === "Available"
-                          ? "success"
-                          : helper.status === "Reserved"
-                            ? "warning"
-                            : "neutral"
-                      }
-                    >
-                      {helper.status}
-                    </Badge>
+                    <StatusBadge status={helper.status} />
                   </td>
                   <td className="px-3 py-4">{formatDate(helper.created_at)}</td>
                   <td className="px-3 py-4">
@@ -197,6 +190,8 @@ export default async function HelpersPage({
               ))}
             </tbody>
           </table>
+          </>
+          )}
         </TableShell>
 
         <div className="max-w-4xl">

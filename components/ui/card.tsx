@@ -11,7 +11,7 @@ export function Card({
   return (
     <section
       className={cn(
-        "surface animate-enter rounded-3xl border border-[var(--color-border)] p-4 shadow-[0_20px_60px_rgba(23,32,51,0.06)] md:p-5",
+        "surface animate-enter rounded-[28px] border border-[var(--color-border)] p-5 shadow-[var(--shadow-soft)] md:p-6",
         className,
       )}
     >

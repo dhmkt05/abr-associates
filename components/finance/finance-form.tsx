@@ -1,6 +1,6 @@
 import type { SalesRow } from "@/lib/types";
 import { createFinanceAction, updateFinanceAction } from "@/lib/actions";
-import { Card } from "@/components/ui/card";
+import { FormSection } from "@/components/ui/form-section";
 import { Input, Select } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import type { FinanceRow } from "@/lib/types";
@@ -17,16 +17,10 @@ export function FinanceForm({
   const action = record ? updateFinanceAction : createFinanceAction;
 
   return (
-    <Card>
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900">
-          {record ? "Edit finance record" : "Add finance record"}
-        </h3>
-        <p className="text-sm text-slate-500">
-          Profit is calculated automatically as amount received minus supplier payment and office expense.
-        </p>
-      </div>
-
+    <FormSection
+      title={record ? "Edit finance record" : "Add finance record"}
+      description="Profit is calculated automatically as amount received minus supplier payment and office expense."
+    >
       <form action={action} className="mt-5 space-y-4">
         <input type="hidden" name="redirect_to" value="/finance" />
         {record ? <input type="hidden" name="id" value={record.id} /> : null}
@@ -79,6 +73,6 @@ export function FinanceForm({
           disabled={disabled}
         />
       </form>
-    </Card>
+    </FormSection>
   );
 }

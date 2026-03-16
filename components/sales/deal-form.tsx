@@ -1,6 +1,6 @@
 import { createDealAction, updateDealAction } from "@/lib/actions";
 import type { Employer, Helper, SalesRow } from "@/lib/types";
-import { Card } from "@/components/ui/card";
+import { FormSection } from "@/components/ui/form-section";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 
@@ -21,14 +21,11 @@ export function DealForm({
   const submitDisabled = disabled || (!deal && !hasHelpers);
 
   return (
-    <Card>
+    <FormSection
+      title={deal ? "Edit sales lead" : "Add sales lead"}
+      description="Create a lead and optionally register a new employer on the same form."
+    >
       <div>
-        <h3 className="text-lg font-semibold text-slate-900">
-          {deal ? "Edit sales lead" : "Add sales lead"}
-        </h3>
-        <p className="text-sm text-slate-500">
-          Create a lead and optionally register a new employer on the same form.
-        </p>
         {!hasHelpers && !deal ? (
           <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Add at least one helper in the Helpers page before creating a sales lead.
@@ -141,6 +138,6 @@ export function DealForm({
           disabled={submitDisabled}
         />
       </form>
-    </Card>
+    </FormSection>
   );
 }

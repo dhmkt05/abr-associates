@@ -1,14 +1,20 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { FinanceForm } from "@/components/finance/finance-form";
 import { TopHeader } from "@/components/layout/top-header";
 import { TableShell } from "@/components/table-shell";
 import { buttonClassName } from "@/components/ui/button";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { FlashMessage } from "@/components/ui/flash-message";
 import { deleteFinanceAction } from "@/lib/actions";
 import { getAppData } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formatCurrency, formatDate } from "@/lib/utils";
+
+export const metadata: Metadata = {
+  title: "Finance",
+};
 
 export default async function FinancePage({
   searchParams,
@@ -38,6 +44,13 @@ export default async function FinancePage({
           title="Finance records"
           description="Profit is stored automatically for cleaner reporting and reconciliation."
         >
+          {finance.length === 0 ? (
+            <EmptyState
+              title="No finance records yet"
+              description="Add collections and costs to unlock revenue, profit, and reporting visibility."
+            />
+          ) : (
+          <>
           <div className="space-y-4 lg:hidden">
             {finance.map((record) => (
               <article
@@ -115,7 +128,7 @@ export default async function FinancePage({
             </thead>
             <tbody>
               {finance.map((record) => (
-                <tr key={record.id} className="border-t border-[var(--color-border)] text-slate-700">
+                <tr key={record.id} className="border-t border-[var(--color-border)] text-slate-700 transition hover:bg-slate-50/80">
                   <td className="px-3 py-4">{formatDate(record.created_at)}</td>
                   <td className="px-3 py-4 font-semibold text-slate-900">{record.deal?.employer?.employer_name}</td>
                   <td className="px-3 py-4">{formatCurrency(record.amount_received)}</td>
@@ -145,6 +158,8 @@ export default async function FinancePage({
               ))}
             </tbody>
           </table>
+          </>
+          )}
         </TableShell>
 
         <div className="max-w-4xl">

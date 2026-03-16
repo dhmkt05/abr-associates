@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ABR Associates Admin",
+  title: {
+    default: "ABR Associates Admin",
+    template: "%s | ABR Associates Admin",
+  },
   description: "Internal business management system for ABR Associates.",
 };
 

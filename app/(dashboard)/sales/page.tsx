@@ -1,15 +1,21 @@
+import type { Metadata } from "next";
 import { TopHeader } from "@/components/layout/top-header";
 import { DealForm } from "@/components/sales/deal-form";
 import { TableShell } from "@/components/table-shell";
-import { Badge } from "@/components/ui/badge";
 import { buttonClassName } from "@/components/ui/button";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { FlashMessage } from "@/components/ui/flash-message";
+import { StatusBadge } from "@/components/ui/status-badge";
 import Link from "next/link";
 import { deleteDealAction } from "@/lib/actions";
 import { getAppData } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formatCurrency, formatDate } from "@/lib/utils";
+
+export const metadata: Metadata = {
+  title: "Sales",
+};
 
 export default async function SalesPage({
   searchParams,
@@ -39,6 +45,13 @@ export default async function SalesPage({
           title="Leads and deals"
           description="Track each employer from first contact to confirmed placement."
         >
+          {deals.length === 0 ? (
+            <EmptyState
+              title="No sales leads yet"
+              description="Create a new employer lead to start managing interviews, negotiations, and confirmed deals."
+            />
+          ) : (
+          <>
           <div className="space-y-4 lg:hidden">
             {deals.map((deal) => (
               <article
@@ -55,17 +68,7 @@ export default async function SalesPage({
                     </h4>
                     <p className="mt-1 text-sm text-slate-600">{deal.helper?.name}</p>
                   </div>
-                  <Badge
-                    tone={
-                      deal.sales_stage === "Confirmed"
-                        ? "success"
-                        : deal.sales_stage === "Negotiation"
-                          ? "warning"
-                          : "accent"
-                    }
-                  >
-                    {deal.sales_stage}
-                  </Badge>
+                  <StatusBadge status={deal.sales_stage} />
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-600">
@@ -124,23 +127,13 @@ export default async function SalesPage({
             </thead>
             <tbody>
               {deals.map((deal) => (
-                <tr key={deal.id} className="border-t border-[var(--color-border)] text-slate-700">
+                <tr key={deal.id} className="border-t border-[var(--color-border)] text-slate-700 transition hover:bg-slate-50/80">
                   <td className="px-3 py-4 font-semibold text-slate-900">{deal.employer?.employer_name}</td>
                   <td className="px-3 py-4">{deal.employer?.country}</td>
                   <td className="px-3 py-4">{deal.helper?.name}</td>
                   <td className="px-3 py-4">{deal.sales_staff}</td>
                   <td className="px-3 py-4">
-                    <Badge
-                      tone={
-                        deal.sales_stage === "Confirmed"
-                          ? "success"
-                          : deal.sales_stage === "Negotiation"
-                            ? "warning"
-                            : "accent"
-                      }
-                    >
-                      {deal.sales_stage}
-                    </Badge>
+                    <StatusBadge status={deal.sales_stage} />
                   </td>
                   <td className="px-3 py-4">{formatCurrency(deal.expected_amount)}</td>
                   <td className="px-3 py-4">{formatDate(deal.created_at)}</td>
@@ -167,6 +160,8 @@ export default async function SalesPage({
               ))}
             </tbody>
           </table>
+          </>
+          )}
         </TableShell>
 
         <div className="max-w-4xl">

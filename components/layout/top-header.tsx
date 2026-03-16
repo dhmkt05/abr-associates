@@ -1,4 +1,4 @@
-import { CalendarDays, LogOut } from "lucide-react";
+import { CalendarDays, ChevronRight, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signOutAction } from "@/lib/actions";
 
@@ -12,35 +12,51 @@ export function TopHeader({
   showSignOut: boolean;
 }) {
   const today = new Intl.DateTimeFormat("en-SG", {
-    weekday: "long",
+    weekday: "short",
     day: "2-digit",
-    month: "long",
+    month: "short",
     year: "numeric",
   }).format(new Date());
 
   return (
-    <header className="surface animate-enter flex flex-col gap-4 rounded-3xl border border-[var(--color-border)] p-4 md:p-5 lg:flex-row lg:items-center lg:justify-between">
+    <header className="flex flex-col gap-5 rounded-[28px] border border-[var(--color-border)] bg-white/90 p-5 shadow-[var(--shadow-soft)] lg:flex-row lg:items-start lg:justify-between">
       <div>
-        <p className="font-mono text-xs uppercase tracking-[0.22em] text-[var(--color-accent)]">
-          Internal Operations
-        </p>
-        <h2 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">{title}</h2>
-        <p className="mt-2 max-w-2xl text-sm text-slate-600">{subtitle}</p>
+        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
+          <span>Dashboard</span>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span className="text-slate-500">{title}</span>
+        </div>
+        <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl">
+          {title}
+        </h2>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">{subtitle}</p>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:self-start lg:self-auto">
-        <div className="flex items-center gap-2 rounded-2xl bg-[var(--color-surface-muted)] px-4 py-3 text-sm text-slate-700 ring-1 ring-[var(--color-border)]">
-          <CalendarDays className="h-4 w-4" />
-          <span className="truncate">{today}</span>
+      <div className="flex flex-col gap-3 lg:min-w-[320px] lg:items-end">
+        <div className="flex w-full flex-col gap-3 sm:flex-row lg:justify-end">
+          <div className="flex items-center gap-2 rounded-2xl border border-[var(--color-border)] bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            <CalendarDays className="h-4 w-4" />
+            <span>{today}</span>
+          </div>
+          {showSignOut ? (
+            <form action={signOutAction}>
+              <Button variant="secondary" className="w-full gap-2 sm:w-auto">
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </Button>
+            </form>
+          ) : null}
         </div>
-        {showSignOut ? (
-          <form action={signOutAction}>
-            <Button variant="secondary" className="w-full gap-2 sm:w-auto">
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </Button>
-          </form>
-        ) : null}
+
+        <div className="flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-slate-50 px-4 py-3">
+          <div className="rounded-2xl bg-slate-950 p-2 text-white">
+            <Shield className="h-4 w-4" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-950">Admin Manager</p>
+            <p className="text-xs text-slate-500">Authenticated Supabase session</p>
+          </div>
+        </div>
       </div>
     </header>
   );

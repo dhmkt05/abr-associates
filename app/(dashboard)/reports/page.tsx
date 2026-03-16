@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { TopHeader } from "@/components/layout/top-header";
 import { Card } from "@/components/ui/card";
@@ -5,6 +6,10 @@ import { Select } from "@/components/ui/input";
 import { getAppData, getDashboardMetrics } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formatCurrency } from "@/lib/utils";
+
+export const metadata: Metadata = {
+  title: "Reports",
+};
 
 function getMonthOptions(deals: Awaited<ReturnType<typeof getAppData>>["deals"]) {
   return Array.from(

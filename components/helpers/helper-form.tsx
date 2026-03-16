@@ -1,6 +1,6 @@
 import { createHelperAction, updateHelperAction } from "@/lib/actions";
 import type { Helper } from "@/lib/types";
-import { Card } from "@/components/ui/card";
+import { FormSection } from "@/components/ui/form-section";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 
@@ -14,16 +14,10 @@ export function HelperForm({
   const action = helper ? updateHelperAction : createHelperAction;
 
   return (
-    <Card>
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900">
-          {helper ? "Edit helper" : "Add helper"}
-        </h3>
-        <p className="text-sm text-slate-500">
-          Maintain profile details used by the sales and documentation teams.
-        </p>
-      </div>
-
+    <FormSection
+      title={helper ? "Edit helper" : "Add helper"}
+      description="Maintain profile details used by the sales and documentation teams."
+    >
       <form action={action} className="mt-5 space-y-4">
         <input type="hidden" name="redirect_to" value="/helpers" />
         {helper ? <input type="hidden" name="id" value={helper.id} /> : null}
@@ -79,6 +73,6 @@ export function HelperForm({
           disabled={disabled}
         />
       </form>
-    </Card>
+    </FormSection>
   );
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LockKeyhole, Mail } from "lucide-react";
+import { LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { loginAction } from "@/lib/actions";
 import { buttonClassName } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,13 +14,19 @@ export function LoginForm({
   demoMode: boolean;
 }) {
   return (
-    <Card className="w-full max-w-md p-8">
+    <Card className="w-full max-w-md rounded-[32px] border-white/70 bg-white/95 p-8">
       <div>
-        <p className="font-mono text-xs uppercase tracking-[0.24em] text-[var(--color-accent)]">
+        <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Secure manager access
+        </div>
+        <p className="mt-5 font-mono text-xs uppercase tracking-[0.24em] text-[var(--color-accent)]">
           Manager Login
         </p>
-        <h1 className="mt-3 text-3xl font-bold text-slate-900">Welcome back</h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950">
+          Welcome back
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-slate-500">
           Sign in to manage helper recruitment, sales progress, documentation, and finance.
         </p>
       </div>

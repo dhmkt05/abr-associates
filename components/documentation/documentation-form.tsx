@@ -3,7 +3,7 @@ import {
   updateDocumentationAction,
 } from "@/lib/actions";
 import type { DocumentationRow, SalesRow } from "@/lib/types";
-import { Card } from "@/components/ui/card";
+import { FormSection } from "@/components/ui/form-section";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 
@@ -19,16 +19,10 @@ export function DocumentationForm({
   const action = record ? updateDocumentationAction : createDocumentationAction;
 
   return (
-    <Card>
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900">
-          {record ? "Edit documentation case" : "Add documentation case"}
-        </h3>
-        <p className="text-sm text-slate-500">
-          Track permit, visa, travel, and payment milestones after a sales confirmation.
-        </p>
-      </div>
-
+    <FormSection
+      title={record ? "Edit documentation case" : "Add documentation case"}
+      description="Track permit, visa, travel, and payment milestones after a sales confirmation."
+    >
       <form action={action} className="mt-5 space-y-4">
         <input type="hidden" name="redirect_to" value="/documentation" />
         {record ? <input type="hidden" name="id" value={record.id} /> : null}
@@ -90,6 +84,6 @@ export function DocumentationForm({
           disabled={disabled}
         />
       </form>
-    </Card>
+    </FormSection>
   );
 }

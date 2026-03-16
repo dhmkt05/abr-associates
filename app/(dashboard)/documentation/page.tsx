@@ -1,15 +1,21 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { DocumentationForm } from "@/components/documentation/documentation-form";
 import { TopHeader } from "@/components/layout/top-header";
 import { TableShell } from "@/components/table-shell";
-import { Badge } from "@/components/ui/badge";
 import { buttonClassName } from "@/components/ui/button";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { FlashMessage } from "@/components/ui/flash-message";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { deleteDocumentationAction } from "@/lib/actions";
 import { getAppData } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formatDate } from "@/lib/utils";
+
+export const metadata: Metadata = {
+  title: "Documentation",
+};
 
 export default async function DocumentationPage({
   searchParams,
@@ -39,6 +45,13 @@ export default async function DocumentationPage({
           title="Documentation cases"
           description="Monitor immigration, permit, and post-arrival milestones."
         >
+          {documentation.length === 0 ? (
+            <EmptyState
+              title="No documentation cases"
+              description="Once a deal is confirmed, add documentation stages here to track permit, visa, travel, and arrival."
+            />
+          ) : (
+          <>
           <div className="space-y-4 lg:hidden">
             {documentation.map((record) => (
               <article
@@ -54,7 +67,7 @@ export default async function DocumentationPage({
                       {record.deal?.employer?.employer_name}
                     </h4>
                   </div>
-                  <Badge tone="accent">{record.stage}</Badge>
+                  <StatusBadge status={record.stage} />
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-600">
@@ -105,25 +118,15 @@ export default async function DocumentationPage({
             </thead>
             <tbody>
               {documentation.map((record) => (
-                <tr key={record.id} className="border-t border-[var(--color-border)] text-slate-700">
+                <tr key={record.id} className="border-t border-[var(--color-border)] text-slate-700 transition hover:bg-slate-50/80">
                   <td className="px-3 py-4 font-semibold text-slate-900">{record.deal?.employer?.employer_name}</td>
                   <td className="px-3 py-4">{record.deal?.helper?.name}</td>
                   <td className="px-3 py-4">
-                    <Badge tone="accent">{record.stage}</Badge>
+                    <StatusBadge status={record.stage} />
                   </td>
                   <td className="px-3 py-4">{record.assigned_staff}</td>
                   <td className="px-3 py-4">
-                    <Badge
-                      tone={
-                        record.status === "Completed"
-                          ? "success"
-                          : record.status === "Pending"
-                            ? "warning"
-                            : "neutral"
-                      }
-                    >
-                      {record.status}
-                    </Badge>
+                    <StatusBadge status={record.status} />
                   </td>
                   <td className="px-3 py-4">{formatDate(record.created_at)}</td>
                   <td className="px-3 py-4">
@@ -152,6 +155,8 @@ export default async function DocumentationPage({
               ))}
             </tbody>
           </table>
+          </>
+          )}
         </TableShell>
 
         <div className="max-w-4xl">

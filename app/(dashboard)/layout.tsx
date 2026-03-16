@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { DemoBanner } from "@/components/demo-banner";
-import { Sidebar } from "@/components/layout/sidebar";
+import { AppSidebar } from "@/components/layout/app-sidebar";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getSession } from "@/lib/supabase/server";
 
@@ -18,10 +18,10 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[248px_1fr] xl:grid-cols-[264px_1fr]">
-      <Sidebar />
-      <main className="px-4 pb-6 pt-0 md:px-6 md:pb-8 lg:p-8">
-        <div className="mx-auto max-w-[1520px] space-y-5 md:space-y-6">
+    <div className="admin-shell min-h-screen xl:grid xl:grid-cols-[280px_1fr]">
+      <AppSidebar />
+      <main className="px-4 pb-8 pt-4 md:px-6 xl:px-8 xl:py-8">
+        <div className="mx-auto max-w-[1520px] space-y-6">
           {!configured ? <DemoBanner /> : null}
           {children}
         </div>
