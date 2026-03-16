@@ -17,6 +17,8 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { canAccessPage } from "@/lib/rbac";
+import type { AppRole } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const navigationGroups = [
@@ -42,7 +44,11 @@ const navigationGroups = [
   },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({
+  role,
+}: {
+  role: AppRole;
+}) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -73,7 +79,25 @@ export function AppSidebar() {
       </div>
 
       <div className="mt-6 space-y-6">
-        {navigationGroups.map((group) => (
+        {navigationGroups
+          .map((group) => ({
+            ...group,
+            items: group.items.filter((item) =>
+              canAccessPage(
+                role,
+                item.href.replace("/", "") as
+                  | "dashboard"
+                  | "helpers"
+                  | "sales"
+                  | "documentation"
+                  | "finance"
+                  | "reports"
+                  | "settings",
+              ),
+            ),
+          }))
+          .filter((group) => group.items.length > 0)
+          .map((group) => (
           <div key={group.label}>
             <p className={cn("px-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400", collapsed && "xl:hidden")}>
               {group.label}
@@ -90,13 +114,15 @@ export function AppSidebar() {
                     className={cn(
                       "group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition",
                       active
-                        ? "bg-slate-950 text-white shadow-sm"
+                        ? "bg-gradient-to-r from-slate-950 to-slate-800 text-white shadow-sm ring-1 ring-slate-900/80"
                         : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
                       collapsed && "xl:justify-center",
                     )}
                   >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    <span className={cn(collapsed && "xl:hidden")}>{label}</span>
+                    <Icon className={cn("h-4 w-4 shrink-0", active && "text-white")} />
+                    <span className={cn(active && "text-white", collapsed && "xl:hidden")}>
+                      {label}
+                    </span>
                   </Link>
                 );
               })}

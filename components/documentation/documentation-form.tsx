@@ -47,7 +47,10 @@ export function DocumentationForm({
             <Select name="stage" required disabled={disabled} defaultValue={record?.stage}>
               <option>Contract</option>
               <option>Work Permit</option>
+              <option>IPA</option>
               <option>Visa</option>
+              <option>Flight Ticket</option>
+              <option>Insurance</option>
               <option>Travel</option>
               <option>Arrival</option>
               <option>First Month Payment</option>

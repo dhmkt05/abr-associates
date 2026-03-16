@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requirePageAccess } from "@/lib/auth";
 import {
   BriefcaseBusiness,
   CircleDollarSign,
@@ -47,6 +48,7 @@ function buildMonthlySeries<T extends { created_at: string }>(
 }
 
 export default async function DashboardPage() {
+  await requirePageAccess("dashboard");
   const configured = isSupabaseConfigured();
   const [metrics, activity, appData] = await Promise.all([
     getDashboardMetrics(),

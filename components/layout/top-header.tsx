@@ -1,8 +1,9 @@
 import { CalendarDays, ChevronRight, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getCurrentUserProfile } from "@/lib/auth";
 import { signOutAction } from "@/lib/actions";
 
-export function TopHeader({
+export async function TopHeader({
   title,
   subtitle,
   showSignOut,
@@ -17,6 +18,7 @@ export function TopHeader({
     month: "short",
     year: "numeric",
   }).format(new Date());
+  const profile = await getCurrentUserProfile();
 
   return (
     <header className="flex flex-col gap-5 rounded-[28px] border border-[var(--color-border)] bg-white/90 p-5 shadow-[var(--shadow-soft)] lg:flex-row lg:items-start lg:justify-between">
@@ -53,8 +55,12 @@ export function TopHeader({
             <Shield className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-950">Admin Manager</p>
-            <p className="text-xs text-slate-500">Authenticated Supabase session</p>
+            <p className="text-sm font-semibold text-slate-950">
+              {profile?.full_name || "Manager"}
+            </p>
+            <p className="text-xs text-slate-500">
+              {(profile?.role ?? "authenticated").replace("_", " ")}
+            </p>
           </div>
         </div>
       </div>

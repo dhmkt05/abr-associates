@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getLoginRedirectPath } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getSession } from "@/lib/supabase/server";
 
@@ -8,5 +9,5 @@ export default async function HomePage() {
   }
 
   const session = await getSession();
-  redirect(session ? "/dashboard" : "/login");
+  redirect(session ? await getLoginRedirectPath() : "/login");
 }

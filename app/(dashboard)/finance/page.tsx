@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { requirePageAccess } from "@/lib/auth";
+import { canManageFinance } from "@/lib/rbac";
 import { FinanceForm } from "@/components/finance/finance-form";
 import { TopHeader } from "@/components/layout/top-header";
 import { TableShell } from "@/components/table-shell";
@@ -25,10 +27,12 @@ export default async function FinancePage({
     message?: string;
   }>;
 }) {
+  const { profile } = await requirePageAccess("finance");
   const params = await searchParams;
   const { deals, finance } = await getAppData();
   const recordToEdit = finance.find((record) => record.id === params.edit);
   const configured = isSupabaseConfigured();
+  const canManage = canManageFinance(profile.role);
 
   return (
     <div className="space-y-6">
@@ -87,22 +91,26 @@ export default async function FinancePage({
                 </div>
 
                 <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                  <Link href={`/finance?edit=${record.id}`} className={`${buttonClassName("secondary")} w-full sm:w-auto`}>
-                    Edit
-                  </Link>
-                  <form action={deleteFinanceAction} className="w-full sm:w-auto">
-                    <input type="hidden" name="id" value={record.id} />
-                    <input type="hidden" name="redirect_to" value="/finance" />
-                    <ConfirmSubmitButton
-                      variant="danger"
-                      type="submit"
-                      className="w-full sm:w-auto"
-                      disabled={!configured}
-                      confirmMessage={`Delete the finance record for ${record.deal?.employer?.employer_name}?`}
-                    >
-                      Delete
-                    </ConfirmSubmitButton>
-                  </form>
+                  {canManage ? (
+                    <>
+                      <Link href={`/finance?edit=${record.id}`} className={`${buttonClassName("secondary")} w-full sm:w-auto`}>
+                        Edit
+                      </Link>
+                      <form action={deleteFinanceAction} className="w-full sm:w-auto">
+                        <input type="hidden" name="id" value={record.id} />
+                        <input type="hidden" name="redirect_to" value="/finance" />
+                        <ConfirmSubmitButton
+                          variant="danger"
+                          type="submit"
+                          className="w-full sm:w-auto"
+                          disabled={!configured}
+                          confirmMessage={`Delete the finance record for ${record.deal?.employer?.employer_name}?`}
+                        >
+                          Delete
+                        </ConfirmSubmitButton>
+                      </form>
+                    </>
+                  ) : null}
                 </div>
               </article>
             ))}
@@ -137,21 +145,25 @@ export default async function FinancePage({
                   <td className="px-3 py-4 font-semibold text-emerald-700">{formatCurrency(record.profit)}</td>
                   <td className="px-3 py-4">
                     <div className="flex gap-2">
-                      <Link href={`/finance?edit=${record.id}`} className={buttonClassName("secondary")}>
-                        Edit
-                      </Link>
-                      <form action={deleteFinanceAction}>
-                        <input type="hidden" name="id" value={record.id} />
-                        <input type="hidden" name="redirect_to" value="/finance" />
-                        <ConfirmSubmitButton
-                          variant="danger"
-                          type="submit"
-                          disabled={!configured}
-                          confirmMessage={`Delete the finance record for ${record.deal?.employer?.employer_name}?`}
-                        >
-                          Delete
-                        </ConfirmSubmitButton>
-                      </form>
+                      {canManage ? (
+                        <>
+                          <Link href={`/finance?edit=${record.id}`} className={buttonClassName("secondary")}>
+                            Edit
+                          </Link>
+                          <form action={deleteFinanceAction}>
+                            <input type="hidden" name="id" value={record.id} />
+                            <input type="hidden" name="redirect_to" value="/finance" />
+                            <ConfirmSubmitButton
+                              variant="danger"
+                              type="submit"
+                              disabled={!configured}
+                              confirmMessage={`Delete the finance record for ${record.deal?.employer?.employer_name}?`}
+                            >
+                              Delete
+                            </ConfirmSubmitButton>
+                          </form>
+                        </>
+                      ) : null}
                     </div>
                   </td>
                 </tr>
@@ -162,9 +174,11 @@ export default async function FinancePage({
           )}
         </TableShell>
 
-        <div className="max-w-4xl">
-          <FinanceForm deals={deals} disabled={!configured} record={recordToEdit} />
-        </div>
+        {canManage ? (
+          <div className="max-w-4xl">
+            <FinanceForm deals={deals} disabled={!configured} record={recordToEdit} />
+          </div>
+        ) : null}
       </div>
     </div>
   );

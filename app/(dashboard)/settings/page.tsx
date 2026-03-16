@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CheckCircle2, CircleAlert, DatabaseZap, ShieldCheck } from "lucide-react";
+import { requirePageAccess } from "@/lib/auth";
 import { TopHeader } from "@/components/layout/top-header";
 import { Card } from "@/components/ui/card";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
   title: "Settings",
 };
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  await requirePageAccess("settings");
   const configured = isSupabaseConfigured();
 
   return (

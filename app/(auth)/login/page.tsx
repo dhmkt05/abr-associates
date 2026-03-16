@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { getLoginRedirectPath } from "@/lib/auth";
 import { LoginForm } from "@/components/auth/login-form";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getSession } from "@/lib/supabase/server";
@@ -18,7 +19,7 @@ export default async function LoginPage({
   if (configured) {
     const session = await getSession();
     if (session) {
-      redirect("/dashboard");
+      redirect(await getLoginRedirectPath());
     }
   }
 

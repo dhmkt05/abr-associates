@@ -1,12 +1,36 @@
+export type AppRole = "admin" | "data_team" | "sales_team" | "documentation_team";
 export type HelperStatus = "Available" | "Reserved" | "Placed" | "Inactive";
 export type SalesStage = "New Lead" | "Interview" | "Negotiation" | "Confirmed";
 export type DocumentationStage =
   | "Contract"
   | "Work Permit"
+  | "IPA"
   | "Visa"
+  | "Flight Ticket"
+  | "Insurance"
   | "Travel"
   | "Arrival"
   | "First Month Payment";
+
+export interface Profile {
+  id: string;
+  email: string;
+  full_name: string;
+  role: AppRole;
+  created_at: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  user_id: string;
+  user_email: string;
+  role: AppRole;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  description: string;
+  created_at: string;
+}
 
 export interface Helper {
   id: string;

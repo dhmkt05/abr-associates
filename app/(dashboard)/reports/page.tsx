@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { requirePageAccess } from "@/lib/auth";
 import { TopHeader } from "@/components/layout/top-header";
 import { Card } from "@/components/ui/card";
 import { Select } from "@/components/ui/input";
-import { getAppData, getDashboardMetrics } from "@/lib/data";
+import { getActivityLogs, getAppData, getDashboardMetrics } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formatCurrency } from "@/lib/utils";
 
@@ -29,9 +30,14 @@ export default async function ReportsPage({
 }: {
   searchParams: Promise<{ month?: string; staff?: string }>;
 }) {
+  await requirePageAccess("reports");
   const configured = isSupabaseConfigured();
   const params = await searchParams;
-  const [metrics, appData] = await Promise.all([getDashboardMetrics(), getAppData()]);
+  const [metrics, appData, activityLogs] = await Promise.all([
+    getDashboardMetrics(),
+    getAppData(),
+    getActivityLogs(),
+  ]);
   const monthOptions = getMonthOptions(appData.deals);
   const staffOptions = Array.from(new Set(appData.deals.map((deal) => deal.sales_staff))).sort();
 
@@ -204,6 +210,35 @@ export default async function ReportsPage({
                     <td className="px-3 py-4">{deal.sales_staff}</td>
                     <td className="px-3 py-4">{deal.sales_stage}</td>
                     <td className="px-3 py-4">{formatCurrency(deal.expected_amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <h3 className="text-lg font-semibold text-slate-900">Activity log</h3>
+          <div className="mt-5 overflow-x-auto rounded-2xl">
+            <table className="min-w-full text-left text-sm">
+              <thead className="text-xs uppercase tracking-[0.18em] text-slate-400">
+                <tr>
+                  {["Date", "User", "Role", "Action", "Entity", "Description"].map((head) => (
+                    <th key={head} className="px-3 py-3 font-medium">
+                      {head}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {activityLogs.map((log) => (
+                  <tr key={log.id} className="border-t border-[var(--color-border)] text-slate-700">
+                    <td className="px-3 py-4">{new Date(log.created_at).toLocaleString("en-SG")}</td>
+                    <td className="px-3 py-4">{log.user_email}</td>
+                    <td className="px-3 py-4">{log.role}</td>
+                    <td className="px-3 py-4">{log.action}</td>
+                    <td className="px-3 py-4">{log.entity_type}</td>
+                    <td className="px-3 py-4">{log.description}</td>
                   </tr>
                 ))}
               </tbody>

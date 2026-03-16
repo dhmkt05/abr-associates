@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { requirePageAccess } from "@/lib/auth";
+import { canManageDocumentation } from "@/lib/rbac";
 import { DocumentationForm } from "@/components/documentation/documentation-form";
 import { TopHeader } from "@/components/layout/top-header";
 import { TableShell } from "@/components/table-shell";
@@ -26,10 +28,12 @@ export default async function DocumentationPage({
     message?: string;
   }>;
 }) {
+  const { profile } = await requirePageAccess("documentation");
   const params = await searchParams;
   const { deals, documentation } = await getAppData();
   const recordToEdit = documentation.find((record) => record.id === params.edit);
   const configured = isSupabaseConfigured();
+  const canManage = canManageDocumentation(profile.role);
 
   return (
     <div className="space-y-6">
@@ -82,25 +86,30 @@ export default async function DocumentationPage({
                 </div>
 
                 <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                  <Link
-                    href={`/documentation?edit=${record.id}`}
-                    className={`${buttonClassName("secondary")} w-full sm:w-auto`}
-                  >
-                    Edit
-                  </Link>
-                  <form action={deleteDocumentationAction} className="w-full sm:w-auto">
-                    <input type="hidden" name="id" value={record.id} />
-                    <input type="hidden" name="redirect_to" value="/documentation" />
-                    <ConfirmSubmitButton
-                      variant="danger"
-                      type="submit"
-                      className="w-full sm:w-auto"
-                      disabled={!configured}
-                      confirmMessage={`Delete the ${record.stage} documentation case?`}
-                    >
-                      Delete
-                    </ConfirmSubmitButton>
-                  </form>
+                  {canManage ? (
+                    <>
+                      <Link
+                        href={`/documentation?edit=${record.id}`}
+                        className={`${buttonClassName("secondary")} w-full sm:w-auto`}
+                      >
+                        Edit
+                      </Link>
+                      <form action={deleteDocumentationAction} className="w-full sm:w-auto">
+                        <input type="hidden" name="id" value={record.id} />
+                        <input type="hidden" name="stage_name" value={record.stage} />
+                        <input type="hidden" name="redirect_to" value="/documentation" />
+                        <ConfirmSubmitButton
+                          variant="danger"
+                          type="submit"
+                          className="w-full sm:w-auto"
+                          disabled={!configured}
+                          confirmMessage={`Delete the ${record.stage} documentation case?`}
+                        >
+                          Delete
+                        </ConfirmSubmitButton>
+                      </form>
+                    </>
+                  ) : null}
                 </div>
               </article>
             ))}
@@ -131,24 +140,29 @@ export default async function DocumentationPage({
                   <td className="px-3 py-4">{formatDate(record.created_at)}</td>
                   <td className="px-3 py-4">
                     <div className="flex gap-2">
-                      <Link
-                        href={`/documentation?edit=${record.id}`}
-                        className={buttonClassName("secondary")}
-                      >
-                        Edit
-                      </Link>
-                      <form action={deleteDocumentationAction}>
-                        <input type="hidden" name="id" value={record.id} />
-                        <input type="hidden" name="redirect_to" value="/documentation" />
-                        <ConfirmSubmitButton
-                          variant="danger"
-                          type="submit"
-                          disabled={!configured}
-                          confirmMessage={`Delete the ${record.stage} documentation case?`}
-                        >
-                          Delete
-                        </ConfirmSubmitButton>
-                      </form>
+                      {canManage ? (
+                        <>
+                          <Link
+                            href={`/documentation?edit=${record.id}`}
+                            className={buttonClassName("secondary")}
+                          >
+                            Edit
+                          </Link>
+                          <form action={deleteDocumentationAction}>
+                            <input type="hidden" name="id" value={record.id} />
+                            <input type="hidden" name="stage_name" value={record.stage} />
+                            <input type="hidden" name="redirect_to" value="/documentation" />
+                            <ConfirmSubmitButton
+                              variant="danger"
+                              type="submit"
+                              disabled={!configured}
+                              confirmMessage={`Delete the ${record.stage} documentation case?`}
+                            >
+                              Delete
+                            </ConfirmSubmitButton>
+                          </form>
+                        </>
+                      ) : null}
                     </div>
                   </td>
                 </tr>
@@ -159,9 +173,11 @@ export default async function DocumentationPage({
           )}
         </TableShell>
 
-        <div className="max-w-4xl">
-          <DocumentationForm deals={deals} disabled={!configured} record={recordToEdit} />
-        </div>
+        {canManage ? (
+          <div className="max-w-4xl">
+            <DocumentationForm deals={deals} disabled={!configured} record={recordToEdit} />
+          </div>
+        ) : null}
       </div>
     </div>
   );

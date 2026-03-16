@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { requirePageAccess } from "@/lib/auth";
+import { canManageSales } from "@/lib/rbac";
 import { TopHeader } from "@/components/layout/top-header";
 import { DealForm } from "@/components/sales/deal-form";
 import { TableShell } from "@/components/table-shell";
@@ -26,10 +28,12 @@ export default async function SalesPage({
     message?: string;
   }>;
 }) {
+  const { profile } = await requirePageAccess("sales");
   const params = await searchParams;
   const { deals, employers, helpers } = await getAppData();
   const dealToEdit = deals.find((deal) => deal.id === params.edit);
   const configured = isSupabaseConfigured();
+  const canManage = canManageSales(profile.role);
 
   return (
     <div className="space-y-6">
@@ -85,22 +89,27 @@ export default async function SalesPage({
                 </div>
 
                 <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                  <Link href={`/sales?edit=${deal.id}`} className={`${buttonClassName("secondary")} w-full sm:w-auto`}>
-                    Edit
-                  </Link>
-                  <form action={deleteDealAction} className="w-full sm:w-auto">
-                    <input type="hidden" name="id" value={deal.id} />
-                    <input type="hidden" name="redirect_to" value="/sales" />
-                    <ConfirmSubmitButton
-                      variant="danger"
-                      type="submit"
-                      className="w-full sm:w-auto"
-                      disabled={!configured}
-                      confirmMessage={`Delete the lead for ${deal.employer?.employer_name}?`}
-                    >
-                      Delete
-                    </ConfirmSubmitButton>
-                  </form>
+                  {canManage ? (
+                    <>
+                      <Link href={`/sales?edit=${deal.id}`} className={`${buttonClassName("secondary")} w-full sm:w-auto`}>
+                        Edit
+                      </Link>
+                      <form action={deleteDealAction} className="w-full sm:w-auto">
+                        <input type="hidden" name="id" value={deal.id} />
+                        <input type="hidden" name="employer_name" value={deal.employer?.employer_name ?? ""} />
+                        <input type="hidden" name="redirect_to" value="/sales" />
+                        <ConfirmSubmitButton
+                          variant="danger"
+                          type="submit"
+                          className="w-full sm:w-auto"
+                          disabled={!configured}
+                          confirmMessage={`Delete the lead for ${deal.employer?.employer_name}?`}
+                        >
+                          Delete
+                        </ConfirmSubmitButton>
+                      </form>
+                    </>
+                  ) : null}
                 </div>
               </article>
             ))}
@@ -139,21 +148,26 @@ export default async function SalesPage({
                   <td className="px-3 py-4">{formatDate(deal.created_at)}</td>
                   <td className="px-3 py-4">
                     <div className="flex gap-2">
-                      <Link href={`/sales?edit=${deal.id}`} className={buttonClassName("secondary")}>
-                        Edit
-                      </Link>
-                      <form action={deleteDealAction}>
-                        <input type="hidden" name="id" value={deal.id} />
-                        <input type="hidden" name="redirect_to" value="/sales" />
-                        <ConfirmSubmitButton
-                          variant="danger"
-                          type="submit"
-                          disabled={!configured}
-                          confirmMessage={`Delete the lead for ${deal.employer?.employer_name}?`}
-                        >
-                          Delete
-                        </ConfirmSubmitButton>
-                      </form>
+                      {canManage ? (
+                        <>
+                          <Link href={`/sales?edit=${deal.id}`} className={buttonClassName("secondary")}>
+                            Edit
+                          </Link>
+                          <form action={deleteDealAction}>
+                            <input type="hidden" name="id" value={deal.id} />
+                            <input type="hidden" name="employer_name" value={deal.employer?.employer_name ?? ""} />
+                            <input type="hidden" name="redirect_to" value="/sales" />
+                            <ConfirmSubmitButton
+                              variant="danger"
+                              type="submit"
+                              disabled={!configured}
+                              confirmMessage={`Delete the lead for ${deal.employer?.employer_name}?`}
+                            >
+                              Delete
+                            </ConfirmSubmitButton>
+                          </form>
+                        </>
+                      ) : null}
                     </div>
                   </td>
                 </tr>
@@ -164,14 +178,16 @@ export default async function SalesPage({
           )}
         </TableShell>
 
-        <div className="max-w-4xl">
-          <DealForm
-            helpers={helpers}
-            employers={employers}
-            disabled={!configured}
-            deal={dealToEdit}
-          />
-        </div>
+        {canManage ? (
+          <div className="max-w-4xl">
+            <DealForm
+              helpers={helpers}
+              employers={employers}
+              disabled={!configured}
+              deal={dealToEdit}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );

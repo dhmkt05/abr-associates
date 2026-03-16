@@ -1,3 +1,4 @@
+import { getCurrentUserProfile } from "@/lib/auth";
 import {
   demoDeals,
   demoDocumentationCases,
@@ -8,6 +9,7 @@ import {
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   ActivityItem,
+  ActivityLog,
   DashboardMetrics,
   Deal,
   DocumentationCase,
@@ -146,6 +148,34 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
 }
 
 export async function getRecentActivity(): Promise<ActivityItem[]> {
+  const supabase = await getSupabaseServerClient();
+  const profile = await getCurrentUserProfile();
+
+  if (supabase && profile?.role === "admin") {
+    const { data, error } = await supabase
+      .from("activity_logs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(8);
+
+    if (!error && data) {
+      return (data as ActivityLog[]).map((item) => ({
+        id: item.id,
+        title: item.action.replaceAll("_", " "),
+        description: item.description,
+        created_at: item.created_at,
+        category:
+          item.entity_type === "helper"
+            ? "helper"
+            : item.entity_type === "documentation_case"
+              ? "documentation"
+              : item.entity_type === "deal"
+                ? "deal"
+                : "finance",
+      }));
+    }
+  }
+
   const { helpers, deals, documentation, finance } = await getAppData();
 
   return [
@@ -180,4 +210,24 @@ export async function getRecentActivity(): Promise<ActivityItem[]> {
   ]
     .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
     .slice(0, 8);
+}
+
+export async function getActivityLogs() {
+  const supabase = await getSupabaseServerClient();
+
+  if (!supabase) {
+    return [] as ActivityLog[];
+  }
+
+  const { data, error } = await supabase
+    .from("activity_logs")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (error || !data) {
+    return [] as ActivityLog[];
+  }
+
+  return data as ActivityLog[];
 }

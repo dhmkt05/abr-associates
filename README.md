@@ -7,10 +7,12 @@ Private internal business management system for ABR Associates, built with Next.
 - Admin login with Supabase Auth
 - Protected dashboard pages for authenticated users only
 - Dashboard overview with business KPIs and recent activity
+- Role-based access control for `admin`, `data_team`, `sales_team`, and `documentation_team`
 - Helper database with add, edit, delete, and search
 - Sales pipeline for employers and helper matching
 - Documentation tracker for post-confirmation stages
 - Finance tracker with automatic profit calculation
+- Admin activity logs for key changes across helpers, deals, documentation, and finance
 - Reports and settings pages
 - Ready to deploy on Vercel
 
@@ -52,6 +54,7 @@ lib/
   types.ts
   utils.ts
 supabase/
+  rbac.sql
   schema.sql
   seed.sql
 proxy.ts
@@ -72,9 +75,11 @@ The app already reads the existing Supabase project from `.env.local`.
 
 1. Open your Supabase SQL editor.
 2. Run `supabase/schema.sql` if you need to recreate the tables/policies.
-3. Run `supabase/seed.sql` if you want example records.
-4. In Supabase Auth, create the manager user manually.
-5. Confirm RLS policies allow `authenticated` users to read and write.
+3. Run `supabase/rbac.sql` to create `profiles`, `activity_logs`, and their RLS policies.
+4. Run `supabase/seed.sql` if you want example records.
+5. In Supabase Auth, create each user manually.
+6. Insert one row into `profiles` for each auth user using the UUID from `auth.users`.
+7. Confirm RLS policies allow authenticated users to read and write the business tables, and admins to manage profiles/activity logs.
 
 ## Local development
 
@@ -90,6 +95,11 @@ Open `http://localhost:3000`.
 - `/login` is the public route
 - `/dashboard`, `/helpers`, `/sales`, `/documentation`, `/finance`, `/reports`, and `/settings` require authentication
 - Unauthenticated users are redirected to `/login`
+- After login, users are redirected by role:
+  - `admin` -> `/dashboard`
+  - `data_team` -> `/helpers`
+  - `sales_team` -> `/sales`
+  - `documentation_team` -> `/documentation`
 - Session refresh uses Supabase SSR proxy handling
 
 ## Database tables used
@@ -99,6 +109,8 @@ Open `http://localhost:3000`.
 - `deals`
 - `documentation_cases`
 - `finance`
+- `profiles`
+- `activity_logs`
 
 ## Notes
 

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Search } from "lucide-react";
+import { requirePageAccess } from "@/lib/auth";
+import { canManageHelpers } from "@/lib/rbac";
 import { HelperForm } from "@/components/helpers/helper-form";
 import { TopHeader } from "@/components/layout/top-header";
 import { TableShell } from "@/components/table-shell";
@@ -29,17 +31,23 @@ export default async function HelpersPage({
     message?: string;
   }>;
 }) {
+  const { profile } = await requirePageAccess("helpers");
   const params = await searchParams;
   const helpers = await getHelpers(params.q);
   const helperToEdit = helpers.find((helper) => helper.id === params.edit);
   const configured = isSupabaseConfigured();
+  const canManage = canManageHelpers(profile.role);
 
   return (
     <div className="space-y-6">
       <FlashMessage type={params.type} message={params.message} />
       <TopHeader
         title="Helper Database"
-        subtitle="Store helper profiles, salary expectations, work type, and current recruitment status."
+        subtitle={
+          canManage
+            ? "Store helper profiles, salary expectations, work type, and current recruitment status."
+            : "Read-only helper records for matching, review, and coordination."
+        }
         showSignOut={configured}
       />
 
@@ -107,25 +115,30 @@ export default async function HelpersPage({
                 </div>
 
                 <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                  <Link
-                    href={`/helpers?edit=${helper.id}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`}
-                    className={`${buttonClassName("secondary")} w-full sm:w-auto`}
-                  >
-                    Edit
-                  </Link>
-                  <form action={deleteHelperAction} className="w-full sm:w-auto">
-                    <input type="hidden" name="id" value={helper.id} />
-                    <input type="hidden" name="redirect_to" value="/helpers" />
-                    <ConfirmSubmitButton
-                      variant="danger"
-                      type="submit"
-                      className="w-full sm:w-auto"
-                      disabled={!configured}
-                      confirmMessage={`Delete helper ${helper.name}? This cannot be undone.`}
-                    >
-                      Delete
-                    </ConfirmSubmitButton>
-                  </form>
+                  {canManage ? (
+                    <>
+                      <Link
+                        href={`/helpers?edit=${helper.id}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`}
+                        className={`${buttonClassName("secondary")} w-full sm:w-auto`}
+                      >
+                        Edit
+                      </Link>
+                      <form action={deleteHelperAction} className="w-full sm:w-auto">
+                        <input type="hidden" name="id" value={helper.id} />
+                        <input type="hidden" name="helper_name" value={helper.name} />
+                        <input type="hidden" name="redirect_to" value="/helpers" />
+                        <ConfirmSubmitButton
+                          variant="danger"
+                          type="submit"
+                          className="w-full sm:w-auto"
+                          disabled={!configured}
+                          confirmMessage={`Delete helper ${helper.name}? This cannot be undone.`}
+                        >
+                          Delete
+                        </ConfirmSubmitButton>
+                      </form>
+                    </>
+                  ) : null}
                 </div>
               </article>
             ))}
@@ -166,24 +179,29 @@ export default async function HelpersPage({
                   <td className="px-3 py-4">{formatDate(helper.created_at)}</td>
                   <td className="px-3 py-4">
                     <div className="flex gap-2">
-                      <Link
-                        href={`/helpers?edit=${helper.id}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`}
-                        className={buttonClassName("secondary")}
-                      >
-                        Edit
-                      </Link>
-                      <form action={deleteHelperAction}>
-                        <input type="hidden" name="id" value={helper.id} />
-                        <input type="hidden" name="redirect_to" value="/helpers" />
-                        <ConfirmSubmitButton
-                          variant="danger"
-                          type="submit"
-                          disabled={!configured}
-                          confirmMessage={`Delete helper ${helper.name}? This cannot be undone.`}
-                        >
-                          Delete
-                        </ConfirmSubmitButton>
-                      </form>
+                      {canManage ? (
+                        <>
+                          <Link
+                            href={`/helpers?edit=${helper.id}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`}
+                            className={buttonClassName("secondary")}
+                          >
+                            Edit
+                          </Link>
+                          <form action={deleteHelperAction}>
+                            <input type="hidden" name="id" value={helper.id} />
+                            <input type="hidden" name="helper_name" value={helper.name} />
+                            <input type="hidden" name="redirect_to" value="/helpers" />
+                            <ConfirmSubmitButton
+                              variant="danger"
+                              type="submit"
+                              disabled={!configured}
+                              confirmMessage={`Delete helper ${helper.name}? This cannot be undone.`}
+                            >
+                              Delete
+                            </ConfirmSubmitButton>
+                          </form>
+                        </>
+                      ) : null}
                     </div>
                   </td>
                 </tr>
@@ -194,9 +212,11 @@ export default async function HelpersPage({
           )}
         </TableShell>
 
-        <div className="max-w-4xl">
-          <HelperForm helper={helperToEdit} disabled={!configured} />
-        </div>
+        {canManage ? (
+          <div className="max-w-4xl">
+            <HelperForm helper={helperToEdit} disabled={!configured} />
+          </div>
+        ) : null}
       </div>
     </div>
   );
