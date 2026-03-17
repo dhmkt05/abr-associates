@@ -11,10 +11,8 @@ import {
   canManageFinance,
   canManageHelpers,
   canManageSales,
-  roleLandingPath,
 } from "@/lib/rbac";
 import { isSupabaseConfigured } from "@/lib/env";
-import type { AppRole } from "@/lib/types";
 import { buildRedirectUrl, parseNumber } from "@/lib/utils";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -91,17 +89,13 @@ export async function loginAction(formData: FormData) {
     redirect(`/login?error=${encodeURIComponent(error.message)}`);
   }
 
-  const { data: profile } = await supabase!
-    .from("profiles")
-    .select("role")
-    .eq("id", data.user.id)
-    .maybeSingle();
-
-  if (!profile) {
-    redirect("/login?error=No role assigned to this account.");
+  if (!data.session) {
+    redirect("/login?error=Unable to start a session for this account.");
   }
 
-  redirect(roleLandingPath[profile.role as AppRole]);
+  // Redirect back through the login page so the freshly written auth cookies
+  // can be read before resolving the user's role-based landing page.
+  redirect("/login");
 }
 
 export async function signOutAction() {
