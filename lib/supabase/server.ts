@@ -44,3 +44,13 @@ export async function getSession() {
 
   return session;
 }
+
+export async function signOutServerSession() {
+  const supabase = await getSupabaseServerClient();
+
+  if (!supabase) {
+    return;
+  }
+
+  await supabase.auth.signOut();
+}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
+import { signOutAction } from "@/lib/actions";
 import { getCurrentUserProfile } from "@/lib/auth";
 import { roleLandingPath } from "@/lib/rbac";
 import { getSession } from "@/lib/supabase/server";
@@ -42,12 +43,22 @@ export default async function AccessDeniedPage() {
           )}
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link href={landing} className={buttonClassName("primary")}>
-            {profile ? "Go to my allowed page" : "Go to login"}
-          </Link>
-          <Link href="/login" className={buttonClassName("secondary")}>
-            Back to login
-          </Link>
+          {profile ? (
+            <Link href={landing} className={buttonClassName("primary")}>
+              Go to my allowed page
+            </Link>
+          ) : (
+            <form action={signOutAction}>
+              <button type="submit" className={buttonClassName("primary")}>
+                Sign out and go to login
+              </button>
+            </form>
+          )}
+          <form action={signOutAction}>
+            <button type="submit" className={buttonClassName("secondary")}>
+              Back to login
+            </button>
+          </form>
         </div>
       </Card>
     </main>
