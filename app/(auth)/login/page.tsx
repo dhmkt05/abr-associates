@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { isSupabaseConfigured } from "@/lib/env";
-import { getCurrentUser } from "@/lib/supabase/server";
+import { getCurrentUser, signOutServerSession } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Login",
@@ -14,15 +14,18 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const configured = isSupabaseConfigured();
+  const params = await searchParams;
 
   if (configured) {
     const user = await getCurrentUser();
     if (user) {
-      redirect("/auth/callback");
+      if (params.error) {
+        await signOutServerSession();
+      } else {
+        redirect("/auth/callback");
+      }
     }
   }
-
-  const params = await searchParams;
 
   return (
     <main className="grid min-h-screen grid-cols-1 bg-[var(--color-page)] lg:grid-cols-[1.08fr_0.92fr]">

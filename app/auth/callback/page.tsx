@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getLoginRedirectPath } from "@/lib/auth";
-import { getCurrentUser } from "@/lib/supabase/server";
+import { getCurrentUser, signOutServerSession } from "@/lib/supabase/server";
 
 export default async function AuthCallbackPage() {
   const user = await getCurrentUser();
@@ -18,6 +18,7 @@ export default async function AuthCallbackPage() {
   });
 
   if (!redirectPath) {
+    await signOutServerSession();
     redirect("/login?error=No matching role profile was found.");
   }
 
