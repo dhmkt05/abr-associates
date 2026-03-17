@@ -43,8 +43,8 @@ export default async function LoginPage({
 
           <div className="grid gap-4 sm:grid-cols-2">
             {[
-              ["Helper records", "Track profiles, availability, salary, and nationality in one place."],
-              ["Sales funnel", "Move employers from lead to confirmed deal with clear stage visibility."],
+              ["Helper records", "Track helper country, type, added by, and current status in one place."],
+              ["Sales funnel", "Move employers from prospect to deal closed with clear status visibility."],
               ["Documentation", "Monitor permits, visas, travel, arrival, and payment milestones."],
               ["Finance", "See revenue, profit, and cost breakdowns with manager-level clarity."],
             ].map(([title, text]) => (

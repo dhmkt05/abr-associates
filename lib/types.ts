@@ -1,16 +1,25 @@
-export type AppRole = "admin" | "data_team" | "sales_team" | "documentation_team";
-export type HelperStatus = "Available" | "Reserved" | "Placed" | "Inactive";
-export type SalesStage = "New Lead" | "Interview" | "Negotiation" | "Confirmed";
-export type DocumentationStage =
-  | "Contract"
-  | "Work Permit"
-  | "IPA"
-  | "Visa"
-  | "Flight Ticket"
-  | "Insurance"
-  | "Travel"
-  | "Arrival"
-  | "First Month Payment";
+export type AppRole =
+  | "admin"
+  | "data_team"
+  | "sales_team"
+  | "documentation_team";
+
+export type HelperStatus = string;
+export type HelperType = "my" | "indo" | "india" | "other";
+export type SalesStatus =
+  | "prospect"
+  | "interview going"
+  | "negotiation"
+  | "deal closed";
+export type DocumentationProcess =
+  | "applying IPA"
+  | "work permit"
+  | "going to take flight"
+  | "flight ticket"
+  | "insurance"
+  | "reach employer house"
+  | "medical follow up";
+export type UpfrontPaymentStatus = "prospect" | "payment done";
 
 export interface Profile {
   id: string;
@@ -36,58 +45,55 @@ export interface Helper {
   id: string;
   helper_id: string;
   name: string;
-  nationality: string;
-  type: string;
-  experience: string;
-  skills: string;
-  salary: number;
+  country: string;
+  type: HelperType;
+  added_by: string;
   status: HelperStatus;
   created_at: string;
 }
 
 export interface Employer {
   id: string;
+  employer_id: string;
   employer_name: string;
-  country: string;
-  phone: string;
-  notes: string;
+  employer_number: string;
+  handled_by: string;
+  status: SalesStatus;
   created_at: string;
 }
 
 export interface Deal {
   id: string;
   employer_id: string;
-  helper_id: string;
-  sales_stage: SalesStage;
-  sales_staff: string;
-  expected_amount: number;
-  notes: string;
+  helper_id: string | null;
+  handled_by: string;
+  status: SalesStatus;
   created_at: string;
 }
 
 export interface DocumentationCase {
   id: string;
   deal_id: string;
-  stage: DocumentationStage;
-  assigned_staff: string;
-  status: string;
-  remarks: string;
+  current_process: DocumentationProcess;
+  upfront_payment_status: UpfrontPaymentStatus;
   created_at: string;
 }
 
 export interface FinanceRecord {
   id: string;
-  deal_id: string;
+  deal_id: string | null;
+  reference: string;
   amount_received: number;
   supplier_payment: number;
   office_expense: number;
+  salary: number;
   profit: number;
   created_at: string;
 }
 
 export interface SalesRow extends Deal {
   employer?: Employer;
-  helper?: Helper;
+  helper?: Helper | null;
 }
 
 export interface DocumentationRow extends DocumentationCase {

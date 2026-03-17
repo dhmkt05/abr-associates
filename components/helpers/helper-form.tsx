@@ -1,8 +1,10 @@
 import { createHelperAction, updateHelperAction } from "@/lib/actions";
 import type { Helper } from "@/lib/types";
 import { FormSection } from "@/components/ui/form-section";
-import { Input, Select, Textarea } from "@/components/ui/input";
+import { Input, Select } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
+
+const helperTypes = ["my", "indo", "india", "other"] as const;
 
 export function HelperForm({
   helper,
@@ -16,7 +18,7 @@ export function HelperForm({
   return (
     <FormSection
       title={helper ? "Edit helper" : "Add helper"}
-      description="Maintain profile details used by the sales and documentation teams."
+      description="Keep helper records short and quick to update for daily admin work."
     >
       <form action={action} className="mt-5 space-y-4">
         <input type="hidden" name="redirect_to" value="/helpers" />
@@ -31,39 +33,36 @@ export function HelperForm({
             <Input name="name" defaultValue={helper?.name} required disabled={disabled} />
           </label>
           <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Nationality</span>
-            <Input name="nationality" defaultValue={helper?.nationality} required disabled={disabled} />
+            <span className="mb-2 block text-sm font-medium text-slate-700">Country</span>
+            <Input name="country" defaultValue={helper?.country} required disabled={disabled} />
           </label>
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">Type</span>
+            <Select name="type" defaultValue={helper?.type ?? "other"} disabled={disabled}>
+              {helperTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </Select>
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-700">Added by</span>
             <Input
-              name="type"
-              defaultValue={helper?.type}
-              placeholder="Transfer / Fresh / Ex-Singapore"
+              name="added_by"
+              defaultValue={helper?.added_by ?? "Admin"}
               required
               disabled={disabled}
             />
           </label>
           <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Experience</span>
-            <Input name="experience" defaultValue={helper?.experience} required disabled={disabled} />
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Salary</span>
-            <Input name="salary" type="number" defaultValue={helper?.salary} required disabled={disabled} />
-          </label>
-          <label className="block md:col-span-2">
             <span className="mb-2 block text-sm font-medium text-slate-700">Status</span>
-            <Select name="status" defaultValue={helper?.status ?? "Available"} disabled={disabled}>
-              <option>Available</option>
-              <option>Reserved</option>
-              <option>Placed</option>
-              <option>Inactive</option>
-            </Select>
-          </label>
-          <label className="block md:col-span-2">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Skills</span>
-            <Textarea name="skills" defaultValue={helper?.skills} disabled={disabled} />
+            <Input
+              name="status"
+              defaultValue={helper?.status ?? "active"}
+              required
+              disabled={disabled}
+            />
           </label>
         </div>
 

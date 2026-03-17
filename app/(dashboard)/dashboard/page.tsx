@@ -56,9 +56,9 @@ export default async function DashboardPage() {
     getAppData(),
   ]);
 
-  const stageBreakdown = ["New Lead", "Interview", "Negotiation", "Confirmed"].map((label) => ({
+  const stageBreakdown = ["prospect", "interview going", "negotiation", "deal closed"].map((label) => ({
     name: label,
-    value: appData.deals.filter((item) => item.sales_stage === label).length,
+    value: appData.deals.filter((item) => item.status === label).length,
   }));
 
   const revenueData = buildMonthlySeries(appData.finance, (item) => item.amount_received).map(
@@ -77,14 +77,14 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <TopHeader
         title="Business Dashboard"
-        subtitle="Monitor helpers, leads, documentation progress, and finance performance from one internal control panel."
+        subtitle="Monitor helpers, sales, documentation progress, and finance performance from one simple admin workspace."
         showSignOut={configured}
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <SummaryCard label="Total Helpers" value={String(metrics.totalHelpers)} icon={Users} trend="Inventory updated" />
         <SummaryCard label="Active Leads" value={String(metrics.activeLeads)} icon={BriefcaseBusiness} trend="Pipeline in motion" />
-        <SummaryCard label="Deals Confirmed" value={String(metrics.dealsConfirmed)} icon={FileCheck2} trend="Placements progressing" />
+        <SummaryCard label="Deals Closed" value={String(metrics.dealsConfirmed)} icon={FileCheck2} trend="Ready for documentation" />
         <SummaryCard label="Documentation Cases" value={String(metrics.documentationCases)} icon={ReceiptText} trend="Cases under processing" />
         <SummaryCard label="Revenue" value={formatCurrency(metrics.revenue)} icon={CircleDollarSign} trend="Collections tracked" />
         <SummaryCard label="Profit" value={formatCurrency(metrics.profit)} icon={HandCoins} trend="Finance visibility improved" />
@@ -115,7 +115,7 @@ export default async function DashboardPage() {
             <div className="mt-6">
               <EmptyState
                 title="No deals available yet"
-                description="Add your first sales lead to populate charts, reports, and pipeline widgets."
+                description="Add your first sales entry to populate charts, reports, and pipeline widgets."
               />
             </div>
           ) : (

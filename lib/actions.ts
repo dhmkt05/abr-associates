@@ -3,15 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { logActivity } from "@/lib/activity";
-import {
-  getCurrentUserProfile,
-} from "@/lib/auth";
-import {
-  canManageDocumentation,
-  canManageFinance,
-  canManageHelpers,
-  canManageSales,
-} from "@/lib/rbac";
+import { getCurrentUserProfile } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import { buildRedirectUrl, parseNumber } from "@/lib/utils";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -51,51 +43,46 @@ function redirectWithMessage(
   );
 }
 
-async function requireActionRole(
-  area: "helpers" | "sales" | "documentation" | "finance",
-) {
+async function requireAuthenticatedUser() {
   const profile = await getCurrentUserProfile();
 
   if (!profile) {
-    redirect("/access-denied?reason=missing-profile");
-  }
-
-  const allowed =
-    area === "helpers"
-      ? canManageHelpers(profile.role)
-      : area === "sales"
-        ? canManageSales(profile.role)
-        : area === "documentation"
-          ? canManageDocumentation(profile.role)
-          : canManageFinance(profile.role);
-
-  if (!allowed) {
-    redirect("/access-denied");
+    redirect("/login");
   }
 
   return profile;
 }
 
-export async function loginAction(formData: FormData) {
-  ensureConfigured();
-  const supabase = await getSupabaseServerClient();
+async function ensureDocumentationCaseForDeal(
+  supabase: NonNullable<Awaited<ReturnType<typeof getSupabaseServerClient>>>,
+  dealId: string,
+) {
+  const { data: existing } = await supabase
+    .from("documentation_cases")
+    .select("id")
+    .eq("deal_id", dealId)
+    .limit(1)
+    .maybeSingle();
 
-  const email = String(formData.get("email") ?? "");
-  const password = String(formData.get("password") ?? "");
+  if (existing) {
+    return existing.id as string;
+  }
 
-  const { data, error } = await supabase!.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase
+    .from("documentation_cases")
+    .insert({
+      deal_id: dealId,
+      current_process: "applying IPA",
+      upfront_payment_status: "prospect",
+    })
+    .select("id")
+    .single();
 
   if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}`);
+    throw new Error(error.message);
   }
 
-  if (!data.session) {
-    redirect("/login?error=Unable to start a session for this account.");
-  }
-
-  // Complete role resolution on a separate request after the auth cookies
-  // have been written by Supabase.
-  redirect("/auth/callback");
+  return data.id as string;
 }
 
 export async function signOutAction() {
@@ -111,19 +98,23 @@ export async function signOutAction() {
 export async function createHelperAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("helpers");
+  await requireAuthenticatedUser();
   const redirectTo = getRedirectTo(formData, "/helpers");
 
-  const { data, error } = await supabase!.from("helpers").insert({
-    helper_id: String(formData.get("helper_id") ?? ""),
-    name: String(formData.get("name") ?? ""),
-    nationality: String(formData.get("nationality") ?? ""),
-    type: String(formData.get("type") ?? ""),
-    experience: String(formData.get("experience") ?? ""),
-    skills: String(formData.get("skills") ?? ""),
-    salary: parseNumber(formData.get("salary")),
-    status: String(formData.get("status") ?? "Available"),
-  }).select("id,name,helper_id").single();
+  const country = String(formData.get("country") ?? "");
+
+  const { data, error } = await supabase!
+    .from("helpers")
+    .insert({
+      helper_id: String(formData.get("helper_id") ?? ""),
+      name: String(formData.get("name") ?? ""),
+      country,
+      type: String(formData.get("type") ?? "other"),
+      added_by: String(formData.get("added_by") ?? "Admin"),
+      status: String(formData.get("status") ?? "active"),
+    })
+    .select("id,name,helper_id")
+    .single();
 
   revalidateDashboardRoutes();
   if (error) {
@@ -137,28 +128,27 @@ export async function createHelperAction(formData: FormData) {
       description: `Created helper ${data.name} (${data.helper_id})`,
     });
   }
-  redirectWithMessage(redirectTo, "success", "Helper created successfully.");
+  redirectWithMessage(redirectTo, "success", "Helper saved successfully.");
 }
 
 export async function updateHelperAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("helpers");
+  await requireAuthenticatedUser();
   const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/helpers");
   const name = String(formData.get("name") ?? "");
+  const country = String(formData.get("country") ?? "");
 
   const { error } = await supabase!
     .from("helpers")
     .update({
       helper_id: String(formData.get("helper_id") ?? ""),
-      name: String(formData.get("name") ?? ""),
-      nationality: String(formData.get("nationality") ?? ""),
-      type: String(formData.get("type") ?? ""),
-      experience: String(formData.get("experience") ?? ""),
-      skills: String(formData.get("skills") ?? ""),
-      salary: parseNumber(formData.get("salary")),
-      status: String(formData.get("status") ?? "Available"),
+      name,
+      country,
+      type: String(formData.get("type") ?? "other"),
+      added_by: String(formData.get("added_by") ?? "Admin"),
+      status: String(formData.get("status") ?? "active"),
     })
     .eq("id", id);
 
@@ -172,13 +162,13 @@ export async function updateHelperAction(formData: FormData) {
     entityId: id,
     description: `Updated helper ${name}`,
   });
-  redirectWithMessage("/helpers", "success", "Helper updated successfully.");
+  redirectWithMessage(redirectTo, "success", "Helper updated successfully.");
 }
 
 export async function deleteHelperAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("helpers");
+  await requireAuthenticatedUser();
   const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/helpers");
   const helperName = String(formData.get("helper_name") ?? "helper");
@@ -194,83 +184,104 @@ export async function deleteHelperAction(formData: FormData) {
     entityId: id,
     description: `Deleted helper ${helperName}`,
   });
-  redirectWithMessage("/helpers", "success", "Helper deleted successfully.");
+  redirectWithMessage(redirectTo, "success", "Helper deleted successfully.");
 }
 
 export async function createDealAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("sales");
+  await requireAuthenticatedUser();
   const redirectTo = getRedirectTo(formData, "/sales");
 
-  const employerId = String(formData.get("employer_id") ?? "");
+  const employerExternalId = String(formData.get("employer_id") ?? "");
   const employerName = String(formData.get("employer_name") ?? "");
+  const employerNumber = String(formData.get("employer_number") ?? "");
+  const handledBy = String(formData.get("handled_by") ?? "Admin");
+  const status = String(formData.get("status") ?? "prospect");
 
-  let resolvedEmployerId = employerId;
-
-  if (!resolvedEmployerId && employerName) {
-    const { data, error } = await supabase!
+  const { data: employer, error: employerError } = await supabase!
       .from("employers")
       .insert({
-        employer_name: employerName,
-        country: String(formData.get("country") ?? ""),
-        phone: String(formData.get("phone") ?? ""),
-        notes: String(formData.get("employer_notes") ?? ""),
-      })
-      .select("id")
-      .single();
+      employer_id: employerExternalId,
+      employer_name: employerName,
+      employer_number: employerNumber,
+      handled_by: handledBy,
+      status,
+    })
+    .select("id")
+    .single();
 
-    if (error) {
-      redirectWithMessage(redirectTo, "error", error.message);
-    }
-    resolvedEmployerId = data?.id ?? "";
+  if (employerError || !employer) {
+    redirectWithMessage(redirectTo, "error", employerError?.message ?? "Employer could not be saved.");
   }
 
-  if (!resolvedEmployerId) {
-    redirectWithMessage(redirectTo, "error", "Employer information is required.");
+  if (!employer) {
+    throw new Error("Employer could not be saved.");
   }
 
-  const { data, error } = await supabase!.from("deals").insert({
-    employer_id: resolvedEmployerId,
-    helper_id: String(formData.get("helper_id") ?? ""),
-    sales_stage: String(formData.get("sales_stage") ?? "New Lead"),
-    sales_staff: String(formData.get("sales_staff") ?? ""),
-    expected_amount: parseNumber(formData.get("expected_amount")),
-    notes: String(formData.get("notes") ?? ""),
-  }).select("id,sales_stage").single();
+  const resolvedEmployer = employer;
+
+  const { data, error } = await supabase!
+    .from("deals")
+    .insert({
+      employer_id: resolvedEmployer.id,
+      helper_id: null,
+      handled_by: handledBy,
+      status,
+    })
+    .select("id,status")
+    .single();
 
   revalidateDashboardRoutes();
-  if (error) {
-    redirectWithMessage(redirectTo, "error", error.message);
+  if (error || !data) {
+    redirectWithMessage(redirectTo, "error", error?.message ?? "Sales entry could not be saved.");
   }
-  if (data) {
-    await logActivity({
-      action: "sales_lead_created",
-      entityType: "deal",
-      entityId: data.id,
-      description: `Created sales lead at stage ${data.sales_stage}`,
-    });
+  if (!data) {
+    throw new Error("Sales entry could not be saved.");
   }
-  redirectWithMessage("/sales", "success", "Sales lead created successfully.");
+  if (status === "deal closed") {
+    await ensureDocumentationCaseForDeal(supabase!, data.id as string);
+  }
+  await logActivity({
+    action: "sales_lead_created",
+    entityType: "deal",
+    entityId: data.id,
+    description: `Created sales lead for ${employerName} with status ${status}`,
+  });
+  redirectWithMessage(redirectTo, "success", "Sales entry saved successfully.");
 }
 
 export async function updateDealAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("sales");
+  await requireAuthenticatedUser();
   const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/sales");
-  const stage = String(formData.get("sales_stage") ?? "New Lead");
+  const employerRecordId = String(formData.get("employer_record_id") ?? "");
+  const status = String(formData.get("status") ?? "prospect");
+  const handledBy = String(formData.get("handled_by") ?? "Admin");
+  const employerName = String(formData.get("employer_name") ?? "");
+
+  const { error: employerError } = await supabase!
+    .from("employers")
+    .update({
+      employer_id: String(formData.get("employer_id") ?? ""),
+      employer_name: employerName,
+      employer_number: String(formData.get("employer_number") ?? ""),
+      handled_by: handledBy,
+      status,
+    })
+    .eq("id", employerRecordId);
+
+  if (employerError) {
+    redirectWithMessage(redirectTo, "error", employerError.message);
+  }
 
   const { error } = await supabase!
     .from("deals")
     .update({
-      employer_id: String(formData.get("employer_id") ?? ""),
-      helper_id: String(formData.get("helper_id") ?? ""),
-      sales_stage: stage,
-      sales_staff: String(formData.get("sales_staff") ?? ""),
-      expected_amount: parseNumber(formData.get("expected_amount")),
-      notes: String(formData.get("notes") ?? ""),
+      handled_by: handledBy,
+      status,
     })
     .eq("id", id);
 
@@ -278,24 +289,33 @@ export async function updateDealAction(formData: FormData) {
   if (error) {
     redirectWithMessage(redirectTo, "error", error.message);
   }
+  if (status === "deal closed") {
+    await ensureDocumentationCaseForDeal(supabase!, id);
+  }
   await logActivity({
     action: "deal_stage_updated",
     entityType: "deal",
     entityId: id,
-    description: `Updated sales deal stage to ${stage}`,
+    description: `Updated ${employerName} to ${status}`,
   });
-  redirectWithMessage("/sales", "success", "Sales lead updated successfully.");
+  redirectWithMessage(redirectTo, "success", "Sales entry updated successfully.");
 }
 
 export async function deleteDealAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("sales");
+  await requireAuthenticatedUser();
   const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/sales");
+  const employerRecordId = String(formData.get("employer_record_id") ?? "");
   const employerName = String(formData.get("employer_name") ?? "lead");
 
   const { error } = await supabase!.from("deals").delete().eq("id", id);
+
+  if (!error && employerRecordId) {
+    await supabase!.from("employers").delete().eq("id", employerRecordId);
+  }
+
   revalidateDashboardRoutes();
   if (error) {
     redirectWithMessage(redirectTo, "error", error.message);
@@ -304,63 +324,60 @@ export async function deleteDealAction(formData: FormData) {
     action: "sales_lead_deleted",
     entityType: "deal",
     entityId: id,
-    description: `Deleted sales lead for ${employerName}`,
+    description: `Deleted sales entry for ${employerName}`,
   });
-  redirectWithMessage("/sales", "success", "Sales lead deleted successfully.");
+  redirectWithMessage(redirectTo, "success", "Sales entry deleted successfully.");
 }
 
 export async function createDocumentationAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("documentation");
+  await requireAuthenticatedUser();
   const redirectTo = getRedirectTo(formData, "/documentation");
-  const stage = String(formData.get("stage") ?? "");
-  const status = String(formData.get("status") ?? "");
+  const currentProcess = String(formData.get("current_process") ?? "applying IPA");
+  const upfrontPaymentStatus = String(formData.get("upfront_payment_status") ?? "prospect");
 
-  const { data, error } = await supabase!.from("documentation_cases").insert({
-    deal_id: String(formData.get("deal_id") ?? ""),
-    stage,
-    assigned_staff: String(formData.get("assigned_staff") ?? ""),
-    status,
-    remarks: String(formData.get("remarks") ?? ""),
-  }).select("id").single();
+  const { data, error } = await supabase!
+    .from("documentation_cases")
+    .insert({
+      deal_id: String(formData.get("deal_id") ?? ""),
+      current_process: currentProcess,
+      upfront_payment_status: upfrontPaymentStatus,
+    })
+    .select("id")
+    .single();
 
   revalidateDashboardRoutes();
-  if (error) {
-    redirectWithMessage(redirectTo, "error", error.message);
+  if (error || !data) {
+    redirectWithMessage(redirectTo, "error", error?.message ?? "Documentation record could not be saved.");
   }
-  if (data) {
-    await logActivity({
-      action: "documentation_created",
-      entityType: "documentation_case",
-      entityId: data.id,
-      description: `Created documentation stage ${stage} with status ${status}`,
-    });
+  if (!data) {
+    throw new Error("Documentation record could not be saved.");
   }
-  redirectWithMessage(
-    "/documentation",
-    "success",
-    "Documentation case created successfully.",
-  );
+  await logActivity({
+    action: "documentation_created",
+    entityType: "documentation_case",
+    entityId: data.id,
+    description: `Created documentation record at ${currentProcess}`,
+  });
+  redirectWithMessage(redirectTo, "success", "Documentation record saved successfully.");
 }
 
 export async function updateDocumentationAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("documentation");
+  await requireAuthenticatedUser();
   const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/documentation");
-  const stage = String(formData.get("stage") ?? "");
-  const status = String(formData.get("status") ?? "");
+  const currentProcess = String(formData.get("current_process") ?? "applying IPA");
+  const upfrontPaymentStatus = String(formData.get("upfront_payment_status") ?? "prospect");
 
   const { error } = await supabase!
     .from("documentation_cases")
     .update({
       deal_id: String(formData.get("deal_id") ?? ""),
-      stage,
-      assigned_staff: String(formData.get("assigned_staff") ?? ""),
-      status,
-      remarks: String(formData.get("remarks") ?? ""),
+      current_process: currentProcess,
+      upfront_payment_status: upfrontPaymentStatus,
     })
     .eq("id", id);
 
@@ -372,27 +389,19 @@ export async function updateDocumentationAction(formData: FormData) {
     action: "documentation_updated",
     entityType: "documentation_case",
     entityId: id,
-    description: `Updated documentation stage ${stage} to status ${status}`,
+    description: `Updated documentation to ${currentProcess} / ${upfrontPaymentStatus}`,
   });
-  redirectWithMessage(
-    "/documentation",
-    "success",
-    "Documentation case updated successfully.",
-  );
+  redirectWithMessage(redirectTo, "success", "Documentation record updated successfully.");
 }
 
 export async function deleteDocumentationAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("documentation");
+  await requireAuthenticatedUser();
   const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/documentation");
-  const stage = String(formData.get("stage_name") ?? "documentation");
 
-  const { error } = await supabase!
-    .from("documentation_cases")
-    .delete()
-    .eq("id", id);
+  const { error } = await supabase!.from("documentation_cases").delete().eq("id", id);
 
   revalidateDashboardRoutes();
   if (error) {
@@ -402,67 +411,75 @@ export async function deleteDocumentationAction(formData: FormData) {
     action: "documentation_deleted",
     entityType: "documentation_case",
     entityId: id,
-    description: `Deleted documentation stage ${stage}`,
+    description: "Deleted documentation record",
   });
-  redirectWithMessage(
-    "/documentation",
-    "success",
-    "Documentation case deleted successfully.",
-  );
+  redirectWithMessage(redirectTo, "success", "Documentation record deleted successfully.");
 }
 
 export async function createFinanceAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("finance");
+  await requireAuthenticatedUser();
   const redirectTo = getRedirectTo(formData, "/finance");
 
   const amountReceived = parseNumber(formData.get("amount_received"));
   const supplierPayment = parseNumber(formData.get("supplier_payment"));
   const officeExpense = parseNumber(formData.get("office_expense"));
+  const salary = parseNumber(formData.get("salary"));
+  const profit = amountReceived - supplierPayment - officeExpense - salary;
 
-  const { data, error } = await supabase!.from("finance").insert({
-    deal_id: String(formData.get("deal_id") ?? ""),
-    amount_received: amountReceived,
-    supplier_payment: supplierPayment,
-    office_expense: officeExpense,
-    profit: amountReceived - supplierPayment - officeExpense,
-  }).select("id,profit").single();
+  const { data, error } = await supabase!
+    .from("finance")
+    .insert({
+      deal_id: String(formData.get("deal_id") ?? "") || null,
+      reference: String(formData.get("reference") ?? ""),
+      amount_received: amountReceived,
+      supplier_payment: supplierPayment,
+      office_expense: officeExpense,
+      salary,
+      profit,
+    })
+    .select("id,profit")
+    .single();
 
   revalidateDashboardRoutes();
-  if (error) {
-    redirectWithMessage(redirectTo, "error", error.message);
+  if (error || !data) {
+    redirectWithMessage(redirectTo, "error", error?.message ?? "Finance record could not be saved.");
   }
-  if (data) {
-    await logActivity({
-      action: "finance_created",
-      entityType: "finance",
-      entityId: data.id,
-      description: `Created finance record with profit ${data.profit}`,
-    });
+  if (!data) {
+    throw new Error("Finance record could not be saved.");
   }
-  redirectWithMessage("/finance", "success", "Finance record created successfully.");
+  await logActivity({
+    action: "finance_created",
+    entityType: "finance",
+    entityId: data.id,
+    description: `Created finance record with profit ${data.profit}`,
+  });
+  redirectWithMessage(redirectTo, "success", "Finance entry saved successfully.");
 }
 
 export async function updateFinanceAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("finance");
+  await requireAuthenticatedUser();
   const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/finance");
 
   const amountReceived = parseNumber(formData.get("amount_received"));
   const supplierPayment = parseNumber(formData.get("supplier_payment"));
   const officeExpense = parseNumber(formData.get("office_expense"));
-  const profit = amountReceived - supplierPayment - officeExpense;
+  const salary = parseNumber(formData.get("salary"));
+  const profit = amountReceived - supplierPayment - officeExpense - salary;
 
   const { error } = await supabase!
     .from("finance")
     .update({
-      deal_id: String(formData.get("deal_id") ?? ""),
+      deal_id: String(formData.get("deal_id") ?? "") || null,
+      reference: String(formData.get("reference") ?? ""),
       amount_received: amountReceived,
       supplier_payment: supplierPayment,
       office_expense: officeExpense,
+      salary,
       profit,
     })
     .eq("id", id);
@@ -477,13 +494,13 @@ export async function updateFinanceAction(formData: FormData) {
     entityId: id,
     description: `Updated finance record with profit ${profit}`,
   });
-  redirectWithMessage("/finance", "success", "Finance record updated successfully.");
+  redirectWithMessage(redirectTo, "success", "Finance entry updated successfully.");
 }
 
 export async function deleteFinanceAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("finance");
+  await requireAuthenticatedUser();
   const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/finance");
 
@@ -498,5 +515,5 @@ export async function deleteFinanceAction(formData: FormData) {
     entityId: id,
     description: "Deleted finance record",
   });
-  redirectWithMessage("/finance", "success", "Finance record deleted successfully.");
+  redirectWithMessage(redirectTo, "success", "Finance entry deleted successfully.");
 }

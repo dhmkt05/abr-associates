@@ -17,8 +17,6 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { canAccessPage } from "@/lib/rbac";
-import type { AppRole } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const navigationGroups = [
@@ -44,11 +42,7 @@ const navigationGroups = [
   },
 ];
 
-export function AppSidebar({
-  role,
-}: {
-  role: AppRole;
-}) {
+export function AppSidebar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -79,25 +73,7 @@ export function AppSidebar({
       </div>
 
       <div className="mt-6 space-y-6">
-        {navigationGroups
-          .map((group) => ({
-            ...group,
-            items: group.items.filter((item) =>
-              canAccessPage(
-                role,
-                item.href.replace("/", "") as
-                  | "dashboard"
-                  | "helpers"
-                  | "sales"
-                  | "documentation"
-                  | "finance"
-                  | "reports"
-                  | "settings",
-              ),
-            ),
-          }))
-          .filter((group) => group.items.length > 0)
-          .map((group) => (
+        {navigationGroups.map((group) => (
           <div key={group.label}>
             <p className={cn("px-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400", collapsed && "xl:hidden")}>
               {group.label}

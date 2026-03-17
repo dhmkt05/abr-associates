@@ -44,7 +44,7 @@ export function DealsStageChart({
   data: Array<{ name: string; value: number }>;
 }) {
   return (
-    <ChartCard title="Deals by stage" description="Distribution of your current sales pipeline.">
+    <ChartCard title="Deals by status" description="Distribution of your current sales pipeline.">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie

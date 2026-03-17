@@ -4,51 +4,48 @@ create table if not exists public.helpers (
   id uuid primary key default gen_random_uuid(),
   helper_id text not null unique,
   name text not null,
-  nationality text not null,
-  type text not null,
-  experience text not null,
-  skills text not null default '',
-  salary numeric(12, 2) not null default 0,
-  status text not null default 'Available',
+  country text not null default '',
+  type text not null default 'other',
+  added_by text not null default 'Admin',
+  status text not null default 'active',
   created_at timestamptz not null default now()
 );
 
 create table if not exists public.employers (
   id uuid primary key default gen_random_uuid(),
+  employer_id text not null default '',
   employer_name text not null,
-  country text not null,
-  phone text not null,
-  notes text not null default '',
+  employer_number text not null default '',
+  handled_by text not null default 'Admin',
+  status text not null default 'prospect',
   created_at timestamptz not null default now()
 );
 
 create table if not exists public.deals (
   id uuid primary key default gen_random_uuid(),
   employer_id uuid not null references public.employers(id) on delete cascade,
-  helper_id uuid not null references public.helpers(id) on delete restrict,
-  sales_stage text not null default 'New Lead',
-  sales_staff text not null,
-  expected_amount numeric(12, 2) not null default 0,
-  notes text not null default '',
+  helper_id uuid references public.helpers(id) on delete restrict,
+  handled_by text not null default 'Admin',
+  status text not null default 'prospect',
   created_at timestamptz not null default now()
 );
 
 create table if not exists public.documentation_cases (
   id uuid primary key default gen_random_uuid(),
   deal_id uuid not null references public.deals(id) on delete cascade,
-  stage text not null,
-  assigned_staff text not null,
-  status text not null,
-  remarks text not null default '',
+  current_process text not null default 'applying IPA',
+  upfront_payment_status text not null default 'prospect',
   created_at timestamptz not null default now()
 );
 
 create table if not exists public.finance (
   id uuid primary key default gen_random_uuid(),
-  deal_id uuid not null references public.deals(id) on delete cascade,
+  deal_id uuid references public.deals(id) on delete cascade,
+  reference text not null default '',
   amount_received numeric(12, 2) not null default 0,
   supplier_payment numeric(12, 2) not null default 0,
   office_expense numeric(12, 2) not null default 0,
+  salary numeric(12, 2) not null default 0,
   profit numeric(12, 2) not null default 0,
   created_at timestamptz not null default now()
 );

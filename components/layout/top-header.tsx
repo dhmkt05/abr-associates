@@ -59,7 +59,7 @@ export async function TopHeader({
               {profile?.full_name || "Manager"}
             </p>
             <p className="text-xs text-slate-500">
-              {(profile?.role ?? "authenticated").replace("_", " ")}
+              admin
             </p>
           </div>
         </div>

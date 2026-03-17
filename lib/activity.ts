@@ -1,4 +1,4 @@
-import { getSession, getSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentUser, getSupabaseServerClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/lib/auth";
 
 export async function logActivity({
@@ -12,20 +12,20 @@ export async function logActivity({
   entityId: string;
   description: string;
 }) {
-  const [session, profile, supabase] = await Promise.all([
-    getSession(),
+  const [user, profile, supabase] = await Promise.all([
+    getCurrentUser(),
     getCurrentUserProfile(),
     getSupabaseServerClient(),
   ]);
 
-  if (!session || !profile || !supabase) {
+  if (!user || !supabase) {
     return;
   }
 
   await supabase.from("activity_logs").insert({
-    user_id: session.user.id,
-    user_email: profile.email,
-    role: profile.role,
+    user_id: user.id,
+    user_email: profile?.email ?? user.email ?? "admin",
+    role: "admin",
     action,
     entity_type: entityType,
     entity_id: entityId,

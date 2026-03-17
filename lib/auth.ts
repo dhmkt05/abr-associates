@@ -1,13 +1,6 @@
 import { redirect } from "next/navigation";
-import {
-  canAccessPage,
-  roleLandingPath,
-  type ProtectedPage,
-} from "@/lib/rbac";
-import {
-  getCurrentUser,
-  getSupabaseServerClient,
-} from "@/lib/supabase/server";
+import { roleLandingPath, type ProtectedPage } from "@/lib/rbac";
+import { getCurrentUser, getSupabaseServerClient } from "@/lib/supabase/server";
 import type { Profile } from "@/lib/types";
 
 export async function getCurrentUserProfile(): Promise<Profile | null> {
@@ -20,23 +13,39 @@ export async function getCurrentUserProfile(): Promise<Profile | null> {
   const supabase = await getSupabaseServerClient();
 
   if (!supabase) {
-    return null;
+    return {
+      id: user.id,
+      email: user.email ?? "",
+      full_name: user.email?.split("@")[0] ?? "Admin",
+      role: "admin",
+      created_at: new Date().toISOString(),
+    };
   }
 
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .maybeSingle();
 
-  if (error || !data) {
-    return null;
+  if (data) {
+    return {
+      ...(data as Profile),
+      role: "admin",
+    };
   }
 
-  return data as Profile;
+  return {
+    id: user.id,
+    email: user.email ?? "",
+    full_name: user.email?.split("@")[0] ?? "Admin",
+    role: "admin",
+    created_at: new Date().toISOString(),
+  };
 }
 
 export async function requirePageAccess(page: ProtectedPage) {
+  void page;
   const user = await getCurrentUser();
 
   if (!user) {
@@ -45,14 +54,6 @@ export async function requirePageAccess(page: ProtectedPage) {
 
   const profile = await getCurrentUserProfile();
 
-  if (!profile) {
-    redirect("/access-denied?reason=missing-profile");
-  }
-
-  if (!canAccessPage(profile.role, page)) {
-    redirect(`/access-denied?from=${page}`);
-  }
-
   return {
     user,
     profile,
@@ -60,11 +61,5 @@ export async function requirePageAccess(page: ProtectedPage) {
 }
 
 export async function getLoginRedirectPath() {
-  const profile = await getCurrentUserProfile();
-
-  if (!profile) {
-    return "/access-denied?reason=missing-profile";
-  }
-
-  return roleLandingPath[profile.role];
+  return roleLandingPath.admin;
 }
