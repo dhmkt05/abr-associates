@@ -45,6 +45,20 @@ export async function getSession() {
   return session;
 }
 
+export async function getCurrentUser() {
+  const supabase = await getSupabaseServerClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return user;
+}
+
 export async function signOutServerSession() {
   const supabase = await getSupabaseServerClient();
 

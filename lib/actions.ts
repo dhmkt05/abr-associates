@@ -93,9 +93,9 @@ export async function loginAction(formData: FormData) {
     redirect("/login?error=Unable to start a session for this account.");
   }
 
-  // Redirect back through the login page so the freshly written auth cookies
-  // can be read before resolving the user's role-based landing page.
-  redirect("/login");
+  // Complete role resolution on a separate request after the auth cookies
+  // have been written by Supabase.
+  redirect("/auth/callback");
 }
 
 export async function signOutAction() {

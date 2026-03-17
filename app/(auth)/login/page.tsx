@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getCurrentUserProfile } from "@/lib/auth";
-import { roleLandingPath } from "@/lib/rbac";
 import { LoginForm } from "@/components/auth/login-form";
 import { isSupabaseConfigured } from "@/lib/env";
-import { getSession, signOutServerSession } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Login",
@@ -16,19 +14,11 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const configured = isSupabaseConfigured();
-  let forcedError: string | undefined;
 
   if (configured) {
-    const session = await getSession();
-    if (session) {
-      const profile = await getCurrentUserProfile();
-
-      if (profile) {
-        redirect(roleLandingPath[profile.role]);
-      }
-
-      await signOutServerSession();
-      forcedError = "No matching role profile was found. Please contact admin.";
+    const user = await getCurrentUser();
+    if (user) {
+      redirect("/auth/callback");
     }
   }
 
@@ -68,7 +58,7 @@ export default async function LoginPage({
       </section>
 
       <section className="flex items-center justify-center p-6 md:p-10">
-        <LoginForm error={params.error ?? forcedError} demoMode={!configured} />
+        <LoginForm error={params.error} demoMode={!configured} />
       </section>
     </main>
   );

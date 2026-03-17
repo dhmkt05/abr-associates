@@ -4,13 +4,16 @@ import {
   roleLandingPath,
   type ProtectedPage,
 } from "@/lib/rbac";
-import { getSession, getSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  getCurrentUser,
+  getSupabaseServerClient,
+} from "@/lib/supabase/server";
 import type { Profile } from "@/lib/types";
 
 export async function getCurrentUserProfile(): Promise<Profile | null> {
-  const session = await getSession();
+  const user = await getCurrentUser();
 
-  if (!session) {
+  if (!user) {
     return null;
   }
 
@@ -23,7 +26,7 @@ export async function getCurrentUserProfile(): Promise<Profile | null> {
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", session.user.id)
+    .eq("id", user.id)
     .maybeSingle();
 
   if (error || !data) {
@@ -34,9 +37,9 @@ export async function getCurrentUserProfile(): Promise<Profile | null> {
 }
 
 export async function requirePageAccess(page: ProtectedPage) {
-  const session = await getSession();
+  const user = await getCurrentUser();
 
-  if (!session) {
+  if (!user) {
     redirect("/login");
   }
 
@@ -51,7 +54,7 @@ export async function requirePageAccess(page: ProtectedPage) {
   }
 
   return {
-    session,
+    user,
     profile,
   };
 }
