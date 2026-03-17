@@ -7,14 +7,11 @@ export type ProtectedPage =
   | "documentation"
   | "finance"
   | "reports"
-  | "settings"
-  | "access-denied";
+  | "settings";
 
 export const roleLandingPath: Record<AppRole, string> = {
   admin: "/dashboard",
   data_team: "/helpers",
-  sales_team: "/dashboard",
-  documentation_team: "/dashboard",
 };
 
 const pagePermissions: Record<ProtectedPage, AppRole[]> = {
@@ -25,7 +22,6 @@ const pagePermissions: Record<ProtectedPage, AppRole[]> = {
   finance: ["admin"],
   reports: ["admin"],
   settings: ["admin"],
-  "access-denied": ["admin", "data_team", "sales_team", "documentation_team"],
 };
 
 export function canAccessPage(role: AppRole, page: ProtectedPage) {

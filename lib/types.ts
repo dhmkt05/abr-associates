@@ -1,8 +1,4 @@
-export type AppRole =
-  | "admin"
-  | "data_team"
-  | "sales_team"
-  | "documentation_team";
+export type AppRole = "admin" | "data_team";
 
 export type HelperStatus = string;
 export type HelperType = "my" | "indo" | "india" | "other";

@@ -3,16 +3,17 @@ import { createServerClient } from "@supabase/ssr";
 import { canAccessPage, roleLandingPath, type ProtectedPage } from "@/lib/rbac";
 import { isSupabaseConfigured } from "@/lib/env";
 import { updateSession } from "@/lib/supabase/middleware";
+import type { AppRole } from "@/lib/types";
 
-function normalizeRole(role: string | null | undefined) {
+function normalizeRole(role: string | null | undefined): AppRole | null {
   const normalized = role?.trim().toLowerCase();
-
-  if (normalized === "data_team") {
-    return "data_team";
-  }
 
   if (normalized === "admin") {
     return "admin";
+  }
+
+  if (normalized === "data_team") {
+    return "data_team";
   }
 
   return null;
@@ -55,13 +56,30 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .maybeSingle();
 
-  const role = normalizeRole(profile?.role) ?? "admin";
+  const rawRole = profile ? String(profile.role ?? "") : null;
+  const resolvedRole = normalizeRole(rawRole);
+
+  console.log("[proxy] role check", {
+    authUserEmail: user.email ?? null,
+    authUserId: user.id,
+    fetchedProfileRole: rawRole,
+    resolvedRole,
+    hadProfileRow: Boolean(profile),
+    queryError: error?.message ?? null,
+    pathname: request.nextUrl.pathname,
+  });
+
+  if (error || !profile || !resolvedRole) {
+    return NextResponse.redirect(
+      new URL("/login?error=No matching role profile was found.", request.url),
+    );
+  }
 
   const pageMap: Array<[string, ProtectedPage]> = [
     ["/dashboard", "dashboard"],
@@ -83,8 +101,8 @@ export async function proxy(request: NextRequest) {
 
   const [, page] = matched;
 
-  if (!canAccessPage(role, page)) {
-    return NextResponse.redirect(new URL(roleLandingPath[role], request.url));
+  if (!canAccessPage(resolvedRole, page)) {
+    return NextResponse.redirect(new URL(roleLandingPath[resolvedRole], request.url));
   }
 
   return sessionResponse;

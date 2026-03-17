@@ -10,12 +10,12 @@ import type { AppRole, Profile } from "@/lib/types";
 function normalizeRole(role: string | null | undefined): AppRole | null {
   const normalized = role?.trim().toLowerCase();
 
-  if (normalized === "data_team") {
-    return "data_team";
-  }
-
   if (normalized === "admin") {
     return "admin";
+  }
+
+  if (normalized === "data_team") {
+    return "data_team";
   }
 
   return null;
@@ -31,41 +31,38 @@ export async function getCurrentUserProfile(): Promise<Profile | null> {
   const supabase = await getSupabaseServerClient();
 
   if (!supabase) {
-    return {
-      id: user.id,
-      email: user.email ?? "",
-      full_name: user.email?.split("@")[0] ?? "Admin",
-      role: "admin",
-      created_at: new Date().toISOString(),
-    };
+    console.log("[auth] no supabase client available", {
+      authUserEmail: user.email ?? null,
+      authUserId: user.id,
+    });
+    return null;
   }
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .maybeSingle();
 
-  if (data) {
-    const profile = data as Profile;
-    const resolvedRole = normalizeRole(profile.role);
+  const rawRole = data ? String((data as Profile).role ?? "") : null;
+  const resolvedRole = normalizeRole(rawRole);
 
-    if (!resolvedRole) {
-      return null;
-    }
+  console.log("[auth] profile lookup", {
+    authUserEmail: user.email ?? null,
+    authUserId: user.id,
+    fetchedProfileRole: rawRole,
+    resolvedRole,
+    hadProfileRow: Boolean(data),
+    queryError: error?.message ?? null,
+  });
 
-    return {
-      ...profile,
-      role: resolvedRole,
-    };
+  if (error || !data || !resolvedRole) {
+    return null;
   }
 
   return {
-    id: user.id,
-    email: user.email ?? "",
-    full_name: user.email?.split("@")[0] ?? "Admin",
-    role: "admin",
-    created_at: new Date().toISOString(),
+    ...(data as Profile),
+    role: resolvedRole,
   };
 }
 
@@ -79,7 +76,7 @@ export async function requirePageAccess(page: ProtectedPage) {
   const profile = await getCurrentUserProfile();
 
   if (!profile) {
-    redirect("/login");
+    redirect("/login?error=No matching role profile was found.");
   }
 
   if (!canAccessPage(profile.role, page)) {
@@ -95,5 +92,9 @@ export async function requirePageAccess(page: ProtectedPage) {
 export async function getLoginRedirectPath() {
   const profile = await getCurrentUserProfile();
 
-  return profile ? roleLandingPath[profile.role] : roleLandingPath.admin;
+  if (!profile) {
+    return null;
+  }
+
+  return roleLandingPath[profile.role];
 }

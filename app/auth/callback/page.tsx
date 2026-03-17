@@ -9,5 +9,17 @@ export default async function AuthCallbackPage() {
     redirect("/login");
   }
 
-  redirect(await getLoginRedirectPath());
+  const redirectPath = await getLoginRedirectPath();
+
+  console.log("[auth-callback] redirect decision", {
+    authUserEmail: user.email ?? null,
+    authUserId: user.id,
+    finalResolvedRolePath: redirectPath,
+  });
+
+  if (!redirectPath) {
+    redirect("/login?error=No matching role profile was found.");
+  }
+
+  redirect(redirectPath);
 }
