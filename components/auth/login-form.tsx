@@ -1,10 +1,14 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { startTransition, useState } from "react";
 import { LockKeyhole, Mail, ShieldCheck } from "lucide-react";
-import { loginAction } from "@/lib/actions";
 import { buttonClassName } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { SubmitButton } from "@/components/ui/submit-button";
+import { Button } from "@/components/ui/button";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export function LoginForm({
   error,
@@ -13,6 +17,41 @@ export function LoginForm({
   error?: string;
   demoMode: boolean;
 }) {
+  const router = useRouter();
+  const [formError, setFormError] = useState(error);
+  const [pending, setPending] = useState(false);
+
+  async function handleSubmit(formData: FormData) {
+    const supabase = createSupabaseBrowserClient();
+
+    if (!supabase) {
+      setFormError("Supabase is not configured.");
+      return;
+    }
+
+    setPending(true);
+    setFormError(undefined);
+
+    const email = String(formData.get("email") ?? "");
+    const password = String(formData.get("password") ?? "");
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      setPending(false);
+      setFormError(signInError.message);
+      return;
+    }
+
+    startTransition(() => {
+      router.push("/auth/callback");
+      router.refresh();
+    });
+  }
+
   return (
     <Card className="w-full max-w-md rounded-[32px] border-white/70 bg-white/95 p-8">
       <div>
@@ -41,7 +80,7 @@ export function LoginForm({
           </div>
         </div>
       ) : (
-        <form action={loginAction} className="mt-6 space-y-4">
+        <form action={handleSubmit} className="mt-6 space-y-4">
           <label className="block">
             <span className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700">
               <Mail className="h-4 w-4" />
@@ -58,11 +97,13 @@ export function LoginForm({
             <Input type="password" name="password" placeholder="Enter your password" required />
           </label>
 
-          {error ? (
-            <p className="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>
+          {formError ? (
+            <p className="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{formError}</p>
           ) : null}
 
-          <SubmitButton label="Sign in" pendingLabel="Signing in..." className="w-full" />
+          <Button type="submit" disabled={pending} className="w-full">
+            {pending ? "Signing in..." : "Sign in"}
+          </Button>
         </form>
       )}
     </Card>
