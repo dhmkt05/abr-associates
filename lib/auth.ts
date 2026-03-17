@@ -7,8 +7,18 @@ import {
 import { getCurrentUser, getSupabaseServerClient } from "@/lib/supabase/server";
 import type { AppRole, Profile } from "@/lib/types";
 
-function normalizeRole(role: string | null | undefined): AppRole {
-  return role === "data_team" ? "data_team" : "admin";
+function normalizeRole(role: string | null | undefined): AppRole | null {
+  const normalized = role?.trim().toLowerCase();
+
+  if (normalized === "data_team") {
+    return "data_team";
+  }
+
+  if (normalized === "admin") {
+    return "admin";
+  }
+
+  return null;
 }
 
 export async function getCurrentUserProfile(): Promise<Profile | null> {
@@ -38,9 +48,15 @@ export async function getCurrentUserProfile(): Promise<Profile | null> {
 
   if (data) {
     const profile = data as Profile;
+    const resolvedRole = normalizeRole(profile.role);
+
+    if (!resolvedRole) {
+      return null;
+    }
+
     return {
       ...profile,
-      role: normalizeRole(profile.role),
+      role: resolvedRole,
     };
   }
 

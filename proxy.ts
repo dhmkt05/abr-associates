@@ -5,7 +5,17 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { updateSession } from "@/lib/supabase/middleware";
 
 function normalizeRole(role: string | null | undefined) {
-  return role === "data_team" ? "data_team" : "admin";
+  const normalized = role?.trim().toLowerCase();
+
+  if (normalized === "data_team") {
+    return "data_team";
+  }
+
+  if (normalized === "admin") {
+    return "admin";
+  }
+
+  return null;
 }
 
 export async function proxy(request: NextRequest) {
@@ -51,7 +61,7 @@ export async function proxy(request: NextRequest) {
     .eq("id", user.id)
     .maybeSingle();
 
-  const role = normalizeRole(profile?.role);
+  const role = normalizeRole(profile?.role) ?? "admin";
 
   const pageMap: Array<[string, ProtectedPage]> = [
     ["/dashboard", "dashboard"],
