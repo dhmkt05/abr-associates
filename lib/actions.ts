@@ -5,12 +5,6 @@ import { redirect } from "next/navigation";
 import { logActivity } from "@/lib/activity";
 import { getCurrentUserProfile } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
-import {
-  canManageDocumentation,
-  canManageFinance,
-  canManageHelpers,
-  canManageSales,
-} from "@/lib/rbac";
 import { buildRedirectUrl, parseNumber } from "@/lib/utils";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -54,27 +48,6 @@ async function requireAuthenticatedUser() {
 
   if (!profile) {
     redirect("/login");
-  }
-
-  return profile;
-}
-
-async function requireActionRole(
-  area: "helpers" | "sales" | "documentation" | "finance",
-) {
-  const profile = await requireAuthenticatedUser();
-
-  const allowed =
-    area === "helpers"
-      ? canManageHelpers(profile.role)
-      : area === "sales"
-        ? canManageSales(profile.role)
-        : area === "documentation"
-          ? canManageDocumentation(profile.role)
-          : canManageFinance(profile.role);
-
-  if (!allowed) {
-    redirect(area === "helpers" ? "/helpers" : "/dashboard");
   }
 
   return profile;
@@ -125,7 +98,7 @@ export async function signOutAction() {
 export async function createHelperAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("helpers");
+  await requireAuthenticatedUser();
   const redirectTo = getRedirectTo(formData, "/helpers");
 
   const country = String(formData.get("country") ?? "");
@@ -161,7 +134,7 @@ export async function createHelperAction(formData: FormData) {
 export async function updateHelperAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("helpers");
+  await requireAuthenticatedUser();
   const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/helpers");
   const name = String(formData.get("name") ?? "");
@@ -195,7 +168,7 @@ export async function updateHelperAction(formData: FormData) {
 export async function deleteHelperAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("helpers");
+  await requireAuthenticatedUser();
   const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/helpers");
   const helperName = String(formData.get("helper_name") ?? "helper");
@@ -217,7 +190,7 @@ export async function deleteHelperAction(formData: FormData) {
 export async function createDealAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("sales");
+  await requireAuthenticatedUser();
   const redirectTo = getRedirectTo(formData, "/sales");
 
   const employerExternalId = String(formData.get("employer_id") ?? "");
@@ -281,7 +254,7 @@ export async function createDealAction(formData: FormData) {
 export async function updateDealAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("sales");
+  await requireAuthenticatedUser();
   const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/sales");
   const employerRecordId = String(formData.get("employer_record_id") ?? "");
@@ -331,7 +304,7 @@ export async function updateDealAction(formData: FormData) {
 export async function deleteDealAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("sales");
+  await requireAuthenticatedUser();
   const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/sales");
   const employerRecordId = String(formData.get("employer_record_id") ?? "");
@@ -359,7 +332,7 @@ export async function deleteDealAction(formData: FormData) {
 export async function createDocumentationAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("documentation");
+  await requireAuthenticatedUser();
   const redirectTo = getRedirectTo(formData, "/documentation");
   const currentProcess = String(formData.get("current_process") ?? "applying IPA");
   const upfrontPaymentStatus = String(formData.get("upfront_payment_status") ?? "prospect");
@@ -393,7 +366,7 @@ export async function createDocumentationAction(formData: FormData) {
 export async function updateDocumentationAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("documentation");
+  await requireAuthenticatedUser();
   const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/documentation");
   const currentProcess = String(formData.get("current_process") ?? "applying IPA");
@@ -424,7 +397,7 @@ export async function updateDocumentationAction(formData: FormData) {
 export async function deleteDocumentationAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("documentation");
+  await requireAuthenticatedUser();
   const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/documentation");
 
@@ -446,7 +419,7 @@ export async function deleteDocumentationAction(formData: FormData) {
 export async function createFinanceAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("finance");
+  await requireAuthenticatedUser();
   const redirectTo = getRedirectTo(formData, "/finance");
 
   const amountReceived = parseNumber(formData.get("amount_received"));
@@ -488,7 +461,7 @@ export async function createFinanceAction(formData: FormData) {
 export async function updateFinanceAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("finance");
+  await requireAuthenticatedUser();
   const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/finance");
 
@@ -527,7 +500,7 @@ export async function updateFinanceAction(formData: FormData) {
 export async function deleteFinanceAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
-  await requireActionRole("finance");
+  await requireAuthenticatedUser();
   const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/finance");
 

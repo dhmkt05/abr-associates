@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { isSupabaseConfigured } from "@/lib/env";
-import { getCurrentUser, signOutServerSession } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Login",
@@ -19,11 +19,7 @@ export default async function LoginPage({
   if (configured) {
     const user = await getCurrentUser();
     if (user) {
-      if (params.error) {
-        await signOutServerSession();
-      } else {
-        redirect("/auth/callback");
-      }
+      redirect("/dashboard");
     }
   }
 

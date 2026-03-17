@@ -1,4 +1,4 @@
-import { getCurrentUserProfile } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/supabase/server";
 import {
   demoDeals,
   demoDocumentationCases,
@@ -248,9 +248,9 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
 
 export async function getRecentActivity(): Promise<ActivityItem[]> {
   const supabase = await getSupabaseServerClient();
-  const profile = await getCurrentUserProfile();
+  const user = await getCurrentUser();
 
-  if (supabase && profile) {
+  if (supabase && user) {
     const { data, error } = await supabase
       .from("activity_logs")
       .select("*")

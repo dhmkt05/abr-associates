@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getCurrentUserProfile } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/supabase/server";
 import { getAppData } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -12,9 +11,8 @@ function escapeCsv(value: string | number | undefined | null) {
 export async function GET(request: Request) {
   if (isSupabaseConfigured()) {
     const user = await getCurrentUser();
-    const profile = await getCurrentUserProfile();
 
-    if (!user || profile?.role !== "admin") {
+    if (!user) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
   }

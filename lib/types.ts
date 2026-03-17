@@ -1,5 +1,3 @@
-export type AppRole = "admin" | "data_team";
-
 export type HelperStatus = string;
 export type HelperType = "my" | "indo" | "india" | "other";
 export type SalesStatus =
@@ -21,7 +19,6 @@ export interface Profile {
   id: string;
   email: string;
   full_name: string;
-  role: AppRole;
   created_at: string;
 }
 
@@ -29,7 +26,7 @@ export interface ActivityLog {
   id: string;
   user_id: string;
   user_email: string;
-  role: AppRole;
+  role: string;
   action: string;
   entity_type: string;
   entity_id: string;

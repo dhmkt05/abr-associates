@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
 import { signOutAction } from "@/lib/actions";
 import { getCurrentUserProfile } from "@/lib/auth";
-import { roleLandingPath } from "@/lib/rbac";
 import { getSession } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
-import { buttonClassName } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Access Denied",
@@ -15,7 +12,6 @@ export const metadata: Metadata = {
 export default async function AccessDeniedPage() {
   const session = await getSession();
   const profile = await getCurrentUserProfile();
-  const landing = profile ? roleLandingPath[profile.role] : "/login";
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
@@ -27,36 +23,20 @@ export default async function AccessDeniedPage() {
           Access denied
         </p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-          You do not have permission to open this page
+          Sign in required
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-500">
-          {profile ? (
-            <>
-              Your current role is{" "}
-              <span className="font-semibold text-slate-800">{profile.role}</span>. Use
-              your assigned workspace instead, or ask an admin to update your role.
-            </>
-          ) : session ? (
-            "Your account is signed in, but no matching profile was found in public.profiles."
-          ) : (
-            "You need to sign in with an authorized account to access this internal system."
-          )}
+          {session && profile
+            ? "Your account is signed in. Use the dashboard navigation to continue."
+            : "You need to sign in with an authenticated account to access this internal system."}
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          {profile ? (
-            <Link href={landing} className={buttonClassName("primary")}>
-              Go to my allowed page
-            </Link>
-          ) : (
-            <form action={signOutAction}>
-              <button type="submit" className={buttonClassName("primary")}>
-                Sign out and go to login
-              </button>
-            </form>
-          )}
           <form action={signOutAction}>
-            <button type="submit" className={buttonClassName("secondary")}>
-              Back to login
+            <button
+              type="submit"
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 text-sm font-semibold text-white"
+            >
+              Go to login
             </button>
           </form>
         </div>
