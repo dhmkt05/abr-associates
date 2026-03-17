@@ -60,18 +60,18 @@ export function AppSidebar({
         collapsed ? "xl:w-[92px]" : "xl:w-[280px]",
       )}
     >
-      <div className="flex items-center justify-between rounded-3xl border border-[var(--color-border)] bg-slate-950 px-4 py-4 text-white">
+      <div className="flex items-center justify-between rounded-3xl border border-sky-200/60 bg-[linear-gradient(135deg,#21577d,#3b82a6)] px-4 py-4 text-white">
         <div className={cn("min-w-0", collapsed && "xl:hidden")}>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-blue-200">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-sky-100">
             Private Admin
           </p>
           <h1 className="mt-1 truncate text-lg font-semibold">ABR Associates</h1>
-          <p className="mt-1 text-xs text-slate-300">Domestic helper business command center</p>
+          <p className="mt-1 text-xs text-sky-50/80">Domestic helper business command center</p>
         </div>
         <button
           type="button"
           onClick={() => setCollapsed((value) => !value)}
-          className="hidden rounded-xl border border-white/10 bg-white/10 p-2 text-white transition hover:bg-white/20 xl:block"
+          className="hidden rounded-xl border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20 xl:block"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -114,8 +114,8 @@ export function AppSidebar({
                     className={cn(
                       "group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition",
                       active
-                        ? "bg-gradient-to-r from-slate-950 to-slate-800 text-white shadow-sm ring-1 ring-slate-900/80"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
+                        ? "bg-gradient-to-r from-sky-600 to-sky-500 text-white shadow-sm ring-1 ring-sky-600/70"
+                        : "text-slate-600 hover:bg-sky-50 hover:text-sky-900",
                       collapsed && "xl:justify-center",
                     )}
                   >
@@ -131,10 +131,10 @@ export function AppSidebar({
         ))}
       </div>
 
-      <div className={cn("mt-auto rounded-3xl border border-[var(--color-border)] bg-slate-50 p-4", collapsed && "xl:hidden")}>
+      <div className={cn("mt-auto rounded-3xl border border-[var(--color-border)] bg-slate-50/90 p-4", collapsed && "xl:hidden")}>
         <div className="flex items-start gap-3">
           <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-[var(--color-border)]">
-            <ShieldCheck className="h-4 w-4 text-slate-700" />
+            <ShieldCheck className="h-4 w-4 text-sky-700" />
           </div>
           <div>
             <p className="text-sm font-semibold text-slate-950">Secure admin workspace</p>
@@ -152,7 +152,7 @@ export function AppSidebar({
       <div className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-white/90 px-4 py-3 backdrop-blur xl:hidden">
         <div className="flex items-center justify-between rounded-2xl border border-[var(--color-border)] bg-white px-4 py-3 shadow-sm">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-accent)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-sky-600">
               Private Admin
             </p>
             <p className="mt-1 text-base font-semibold text-slate-950">ABR Associates</p>

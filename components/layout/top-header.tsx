@@ -51,7 +51,7 @@ export async function TopHeader({
         </div>
 
         <div className="flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-slate-50 px-4 py-3">
-          <div className="rounded-2xl bg-slate-950 p-2 text-white">
+          <div className="rounded-2xl bg-sky-600 p-2 text-white">
             <Shield className="h-4 w-4" />
           </div>
           <div>
