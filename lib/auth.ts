@@ -1,7 +1,15 @@
 import { redirect } from "next/navigation";
-import { roleLandingPath, type ProtectedPage } from "@/lib/rbac";
+import {
+  canAccessPage,
+  roleLandingPath,
+  type ProtectedPage,
+} from "@/lib/rbac";
 import { getCurrentUser, getSupabaseServerClient } from "@/lib/supabase/server";
-import type { Profile } from "@/lib/types";
+import type { AppRole, Profile } from "@/lib/types";
+
+function normalizeRole(role: string | null | undefined): AppRole {
+  return role === "data_team" ? "data_team" : "admin";
+}
 
 export async function getCurrentUserProfile(): Promise<Profile | null> {
   const user = await getCurrentUser();
@@ -29,9 +37,10 @@ export async function getCurrentUserProfile(): Promise<Profile | null> {
     .maybeSingle();
 
   if (data) {
+    const profile = data as Profile;
     return {
-      ...(data as Profile),
-      role: "admin",
+      ...profile,
+      role: normalizeRole(profile.role),
     };
   }
 
@@ -45,7 +54,6 @@ export async function getCurrentUserProfile(): Promise<Profile | null> {
 }
 
 export async function requirePageAccess(page: ProtectedPage) {
-  void page;
   const user = await getCurrentUser();
 
   if (!user) {
@@ -54,6 +62,14 @@ export async function requirePageAccess(page: ProtectedPage) {
 
   const profile = await getCurrentUserProfile();
 
+  if (!profile) {
+    redirect("/login");
+  }
+
+  if (!canAccessPage(profile.role, page)) {
+    redirect(roleLandingPath[profile.role]);
+  }
+
   return {
     user,
     profile,
@@ -61,5 +77,7 @@ export async function requirePageAccess(page: ProtectedPage) {
 }
 
 export async function getLoginRedirectPath() {
-  return roleLandingPath.admin;
+  const profile = await getCurrentUserProfile();
+
+  return profile ? roleLandingPath[profile.role] : roleLandingPath.admin;
 }

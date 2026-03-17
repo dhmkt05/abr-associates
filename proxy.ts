@@ -1,7 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { canAccessPage, roleLandingPath, type ProtectedPage } from "@/lib/rbac";
 import { isSupabaseConfigured } from "@/lib/env";
 import { updateSession } from "@/lib/supabase/middleware";
+
+function normalizeRole(role: string | null | undefined) {
+  return role === "data_team" ? "data_team" : "admin";
+}
 
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next({
@@ -38,6 +43,38 @@ export async function proxy(request: NextRequest) {
 
   if (!user) {
     return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const role = normalizeRole(profile?.role);
+
+  const pageMap: Array<[string, ProtectedPage]> = [
+    ["/dashboard", "dashboard"],
+    ["/helpers", "helpers"],
+    ["/sales", "sales"],
+    ["/documentation", "documentation"],
+    ["/finance", "finance"],
+    ["/reports", "reports"],
+    ["/settings", "settings"],
+  ];
+
+  const matched = pageMap.find(([prefix]) =>
+    request.nextUrl.pathname.startsWith(prefix),
+  );
+
+  if (!matched) {
+    return sessionResponse;
+  }
+
+  const [, page] = matched;
+
+  if (!canAccessPage(role, page)) {
+    return NextResponse.redirect(new URL(roleLandingPath[role], request.url));
   }
 
   return sessionResponse;

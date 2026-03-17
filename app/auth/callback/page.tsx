@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getLoginRedirectPath } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/supabase/server";
 
 export default async function AuthCallbackPage() {
@@ -8,5 +9,5 @@ export default async function AuthCallbackPage() {
     redirect("/login");
   }
 
-  redirect("/dashboard");
+  redirect(await getLoginRedirectPath());
 }

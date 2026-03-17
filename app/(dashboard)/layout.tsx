@@ -7,14 +7,16 @@ export default async function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const configured = isSupabaseConfigured();
+  let role: "admin" | "data_team" = "admin";
 
   if (configured) {
-    await requirePageAccess("dashboard");
+    const { profile } = await requirePageAccess("helpers");
+    role = profile.role === "data_team" ? "data_team" : "admin";
   }
 
   return (
     <div className="admin-shell min-h-screen xl:grid xl:grid-cols-[280px_1fr]">
-      <AppSidebar />
+      <AppSidebar role={role} />
       <main className="px-4 pb-8 pt-4 md:px-6 xl:px-8 xl:py-8">
         <div className="mx-auto max-w-[1520px] space-y-6">
           {!configured ? <DemoBanner /> : null}
