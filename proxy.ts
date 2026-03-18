@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import {
+  ACCESS_NOT_CONFIGURED_ERROR,
   canRoleAccessPage,
   getLandingPathForRole,
-  MISSING_ROLE_PROFILE_ERROR,
-  normalizeAppRole,
+  getRoleForEmail,
   type ProtectedPage,
 } from "@/lib/access-control";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -59,20 +59,13 @@ export async function proxy(request: NextRequest) {
   if (!user) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
-
-  const { data: profileRow } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const role = normalizeAppRole(String(profileRow?.role ?? ""));
+  const role = getRoleForEmail(user.email);
 
   if (!role) {
     return NextResponse.redirect(
       new URL(
         buildRedirectUrl("/login", {
-          error: MISSING_ROLE_PROFILE_ERROR,
+          error: ACCESS_NOT_CONFIGURED_ERROR,
         }),
         request.url,
       ),

@@ -1,46 +1,37 @@
 import { redirect } from "next/navigation";
 import { buildRedirectUrl } from "@/lib/utils";
 import {
+  ACCESS_NOT_CONFIGURED_ERROR,
   canRoleAccessPage,
   getLandingPathForRole,
-  MISSING_ROLE_PROFILE_ERROR,
-  normalizeAppRole,
+  getRoleForEmail,
   type ProtectedPage,
 } from "@/lib/access-control";
 import { getCurrentUser } from "@/lib/supabase/server";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { AppRole, Profile } from "@/lib/types";
 
 export async function getCurrentUserProfile(): Promise<Profile | null> {
   const user = await getCurrentUser();
-  const supabase = await getSupabaseServerClient();
 
-  if (!user || !supabase) {
+  if (!user) {
     return null;
   }
+  const email = user.email ?? "";
+  const role = getRoleForEmail(email);
 
-  const { data: profileRow } = await supabase
-    .from("profiles")
-    .select("id,email,full_name,role,created_at")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const role = normalizeAppRole(String(profileRow?.role ?? ""));
-
-  if (!profileRow || !role) {
+  if (!role) {
     return null;
   }
 
   return {
-    id: String(profileRow.id),
-    email: String(profileRow.email ?? user.email ?? ""),
+    id: user.id,
+    email,
     full_name:
-      String(profileRow.full_name ?? "").trim() ||
-      (typeof user.user_metadata?.full_name === "string" && user.user_metadata.full_name) ||
-      user.email?.split("@")[0] ||
+      (typeof user.user_metadata?.full_name === "string" && user.user_metadata.full_name.trim()) ||
+      email.split("@")[0] ||
       "User",
     role,
-    created_at: String(profileRow.created_at ?? new Date().toISOString()),
+    created_at: new Date().toISOString(),
   };
 }
 
@@ -56,7 +47,7 @@ export async function requireAuthenticatedProfile() {
   if (!profile) {
     redirect(
       buildRedirectUrl("/login", {
-        error: MISSING_ROLE_PROFILE_ERROR,
+        error: ACCESS_NOT_CONFIGURED_ERROR,
       }),
     );
   }
@@ -85,7 +76,7 @@ export async function getLoginRedirectPath() {
 
   if (!profile) {
     return buildRedirectUrl("/login", {
-      error: MISSING_ROLE_PROFILE_ERROR,
+      error: ACCESS_NOT_CONFIGURED_ERROR,
     });
   }
 

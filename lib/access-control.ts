@@ -1,6 +1,6 @@
 import type { AppRole } from "@/lib/types";
 
-export const MISSING_ROLE_PROFILE_ERROR = "No matching role profile was found.";
+export const ACCESS_NOT_CONFIGURED_ERROR = "Access not configured for this account.";
 
 export type ProtectedPage =
   | "dashboard"
@@ -33,6 +33,14 @@ export const roleLandingPage: Record<AppRole, string> = {
   documentation_team: "/documentation",
 };
 
+const emailRoleMap: Record<string, AppRole> = {
+  "abrkannan11@gmail.com": "admin",
+  "emeraldangelah@gmail.com": "helper_team",
+  "utabdulrahmanin@gmail.com": "sales_team",
+  "florajasmin07@gmail.com": "sales_team",
+  "abrlogeshm@gmail.com": "documentation_team",
+};
+
 export function normalizeAppRole(value: string | null | undefined): AppRole | null {
   const normalized = String(value ?? "").trim().toLowerCase();
 
@@ -46,6 +54,14 @@ export function normalizeAppRole(value: string | null | undefined): AppRole | nu
   }
 
   return null;
+}
+
+export function normalizeEmail(value: string | null | undefined) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+export function getRoleForEmail(email: string | null | undefined): AppRole | null {
+  return emailRoleMap[normalizeEmail(email)] ?? null;
 }
 
 export function canRoleAccessPage(role: AppRole, page: ProtectedPage) {

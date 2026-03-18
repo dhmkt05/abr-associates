@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { MISSING_ROLE_PROFILE_ERROR } from "@/lib/access-control";
+import { ACCESS_NOT_CONFIGURED_ERROR } from "@/lib/access-control";
 import { getLoginRedirectPath } from "@/lib/auth";
 import { LoginForm } from "@/components/auth/login-form";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -24,7 +24,7 @@ export default async function LoginPage({
       const redirectPath = await getLoginRedirectPath();
 
       if (
-        !(params.error === MISSING_ROLE_PROFILE_ERROR && redirectPath.startsWith("/login?error="))
+        !(params.error === ACCESS_NOT_CONFIGURED_ERROR && redirectPath.startsWith("/login?error="))
       ) {
         redirect(redirectPath);
       }

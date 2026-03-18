@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { MISSING_ROLE_PROFILE_ERROR } from "@/lib/access-control";
+import { ACCESS_NOT_CONFIGURED_ERROR } from "@/lib/access-control";
 import { getCurrentUserProfile, getLoginRedirectPath } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/supabase/server";
 
@@ -13,7 +13,7 @@ export default async function AuthCallbackPage() {
   const profile = await getCurrentUserProfile();
 
   if (!profile) {
-    redirect(`/login?error=${encodeURIComponent(MISSING_ROLE_PROFILE_ERROR)}`);
+    redirect(`/login?error=${encodeURIComponent(ACCESS_NOT_CONFIGURED_ERROR)}`);
   }
 
   redirect(await getLoginRedirectPath());
