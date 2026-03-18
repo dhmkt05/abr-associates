@@ -8,7 +8,8 @@ export function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "SGD",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
+    maximumFractionDigits: 2,
   }).format(value || 0);
 }
 
@@ -21,7 +22,16 @@ export function formatDate(value: string) {
 }
 
 export function parseNumber(value: FormDataEntryValue | null) {
-  return Number(value ?? 0) || 0;
+  const normalized = String(value ?? "")
+    .trim()
+    .replaceAll(",", "");
+
+  if (!normalized) {
+    return 0;
+  }
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 export function buildRedirectUrl(

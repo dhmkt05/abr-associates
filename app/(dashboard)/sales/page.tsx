@@ -43,6 +43,10 @@ export default async function SalesPage({
       />
 
       <div className="space-y-6">
+        <div className="max-w-4xl">
+          <DealForm disabled={!configured} deal={dealToEdit} />
+        </div>
+
         <TableShell
           title="Sales entries"
           description="Update employer records fast and move them from prospect to closed deal."
@@ -157,10 +161,6 @@ export default async function SalesPage({
             </>
           )}
         </TableShell>
-
-        <div className="max-w-4xl">
-          <DealForm disabled={!configured} deal={dealToEdit} />
-        </div>
       </div>
     </div>
   );

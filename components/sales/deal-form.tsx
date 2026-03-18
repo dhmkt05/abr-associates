@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { createDealAction, updateDealAction } from "@/lib/actions";
 import type { SalesRow } from "@/lib/types";
 import { FormSection } from "@/components/ui/form-section";
+import { buttonClassName } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 
@@ -29,6 +31,19 @@ export function DealForm({
         <input type="hidden" name="redirect_to" value="/sales" />
         {deal ? <input type="hidden" name="id" value={deal.id} /> : null}
         {deal?.employer ? <input type="hidden" name="employer_record_id" value={deal.employer.id} /> : null}
+        {deal ? (
+          <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold">Editing existing sales entry</p>
+              <p className="text-amber-800">
+                Saving will update {deal.employer?.employer_name ?? "this employer"} instead of creating a new row.
+              </p>
+            </div>
+            <Link href="/sales" className={buttonClassName("secondary")}>
+              Cancel edit
+            </Link>
+          </div>
+        ) : null}
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">Employer ID</span>

@@ -30,6 +30,10 @@ function getRedirectTo(formData: FormData, fallback: string) {
   return String(formData.get("redirect_to") ?? fallback);
 }
 
+function getRequiredId(formData: FormData, field: string) {
+  return String(formData.get(field) ?? "").trim();
+}
+
 function redirectWithMessage(
   redirectTo: string,
   type: "success" | "error",
@@ -135,8 +139,13 @@ export async function updateHelperAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
   await requireAuthenticatedUser();
-  const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/helpers");
+  const id = getRequiredId(formData, "id");
+
+  if (!id) {
+    redirectWithMessage(redirectTo, "error", "Helper update failed because the record id is missing.");
+  }
+
   const name = String(formData.get("name") ?? "");
   const country = String(formData.get("country") ?? "");
 
@@ -255,9 +264,18 @@ export async function updateDealAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
   await requireAuthenticatedUser();
-  const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/sales");
-  const employerRecordId = String(formData.get("employer_record_id") ?? "");
+  const id = getRequiredId(formData, "id");
+  const employerRecordId = getRequiredId(formData, "employer_record_id");
+
+  if (!id || !employerRecordId) {
+    redirectWithMessage(
+      redirectTo,
+      "error",
+      "Sales update failed because the existing record reference is missing.",
+    );
+  }
+
   const status = String(formData.get("status") ?? "prospect");
   const handledBy = String(formData.get("handled_by") ?? "Admin");
   const employerName = String(formData.get("employer_name") ?? "");
@@ -367,8 +385,17 @@ export async function updateDocumentationAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
   await requireAuthenticatedUser();
-  const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/documentation");
+  const id = getRequiredId(formData, "id");
+
+  if (!id) {
+    redirectWithMessage(
+      redirectTo,
+      "error",
+      "Documentation update failed because the record id is missing.",
+    );
+  }
+
   const currentProcess = String(formData.get("current_process") ?? "applying IPA");
   const upfrontPaymentStatus = String(formData.get("upfront_payment_status") ?? "prospect");
 
@@ -426,13 +453,14 @@ export async function createFinanceAction(formData: FormData) {
   const supplierPayment = parseNumber(formData.get("supplier_payment"));
   const officeExpense = parseNumber(formData.get("office_expense"));
   const salary = parseNumber(formData.get("salary"));
+  const reference = String(formData.get("reference") ?? "").trim();
   const profit = amountReceived - supplierPayment - officeExpense - salary;
 
   const { data, error } = await supabase!
     .from("finance")
     .insert({
       deal_id: String(formData.get("deal_id") ?? "") || null,
-      reference: String(formData.get("reference") ?? ""),
+      reference,
       amount_received: amountReceived,
       supplier_payment: supplierPayment,
       office_expense: officeExpense,
@@ -453,7 +481,7 @@ export async function createFinanceAction(formData: FormData) {
     action: "finance_created",
     entityType: "finance",
     entityId: data.id,
-    description: `Created finance record with profit ${data.profit}`,
+    description: `Created finance record for ${reference || "linked deal"} with profit ${data.profit}`,
   });
   redirectWithMessage(redirectTo, "success", "Finance entry saved successfully.");
 }
@@ -462,20 +490,25 @@ export async function updateFinanceAction(formData: FormData) {
   ensureConfigured();
   const supabase = await getSupabaseServerClient();
   await requireAuthenticatedUser();
-  const id = String(formData.get("id") ?? "");
   const redirectTo = getRedirectTo(formData, "/finance");
+  const id = getRequiredId(formData, "id");
+
+  if (!id) {
+    redirectWithMessage(redirectTo, "error", "Finance update failed because the record id is missing.");
+  }
 
   const amountReceived = parseNumber(formData.get("amount_received"));
   const supplierPayment = parseNumber(formData.get("supplier_payment"));
   const officeExpense = parseNumber(formData.get("office_expense"));
   const salary = parseNumber(formData.get("salary"));
+  const reference = String(formData.get("reference") ?? "").trim();
   const profit = amountReceived - supplierPayment - officeExpense - salary;
 
   const { error } = await supabase!
     .from("finance")
     .update({
       deal_id: String(formData.get("deal_id") ?? "") || null,
-      reference: String(formData.get("reference") ?? ""),
+      reference,
       amount_received: amountReceived,
       supplier_payment: supplierPayment,
       office_expense: officeExpense,
@@ -492,7 +525,7 @@ export async function updateFinanceAction(formData: FormData) {
     action: "finance_updated",
     entityType: "finance",
     entityId: id,
-    description: `Updated finance record with profit ${profit}`,
+    description: `Updated finance record for ${reference || "linked deal"} with profit ${profit}`,
   });
   redirectWithMessage(redirectTo, "success", "Finance entry updated successfully.");
 }

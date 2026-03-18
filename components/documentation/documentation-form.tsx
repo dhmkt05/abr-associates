@@ -1,9 +1,11 @@
+import Link from "next/link";
 import {
   createDocumentationAction,
   updateDocumentationAction,
 } from "@/lib/actions";
 import type { DocumentationRow, SalesRow } from "@/lib/types";
 import { FormSection } from "@/components/ui/form-section";
+import { buttonClassName } from "@/components/ui/button";
 import { Select } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 
@@ -29,7 +31,12 @@ export function DocumentationForm({
   record?: DocumentationRow;
 }) {
   const action = record ? updateDocumentationAction : createDocumentationAction;
+  const currentDeal =
+    record?.deal_id ? deals.find((deal) => deal.id === record.deal_id) : undefined;
   const closedDeals = deals.filter((deal) => deal.status === "deal closed");
+  const selectableDeals = currentDeal
+    ? [currentDeal, ...closedDeals.filter((deal) => deal.id !== currentDeal.id)]
+    : closedDeals;
 
   return (
     <FormSection
@@ -39,6 +46,19 @@ export function DocumentationForm({
       <form action={action} className="mt-5 space-y-4">
         <input type="hidden" name="redirect_to" value="/documentation" />
         {record ? <input type="hidden" name="id" value={record.id} /> : null}
+        {record ? (
+          <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold">Editing existing documentation record</p>
+              <p className="text-amber-800">
+                Saving will update the current documentation row instead of adding another one.
+              </p>
+            </div>
+            <Link href="/documentation" className={buttonClassName("secondary")}>
+              Cancel edit
+            </Link>
+          </div>
+        ) : null}
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block md:col-span-2">
             <span className="mb-2 block text-sm font-medium text-slate-700">Closed sales record</span>
@@ -48,7 +68,7 @@ export function DocumentationForm({
               disabled={disabled}
               defaultValue={record?.deal_id}
             >
-              {closedDeals.map((deal) => (
+              {selectableDeals.map((deal) => (
                 <option key={deal.id} value={deal.id}>
                   {deal.employer?.employer_id} · {deal.employer?.employer_name} · {deal.employer?.employer_number}
                 </option>
@@ -90,7 +110,7 @@ export function DocumentationForm({
         <SubmitButton
           label={record ? "Update documentation" : "Save documentation"}
           pendingLabel={record ? "Updating..." : "Saving..."}
-          disabled={disabled || (!record && closedDeals.length === 0)}
+          disabled={disabled || (!record && selectableDeals.length === 0)}
         />
       </form>
     </FormSection>

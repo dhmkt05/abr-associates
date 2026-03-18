@@ -42,6 +42,10 @@ export default async function FinancePage({
       />
 
       <div className="space-y-6">
+        <div className="max-w-4xl">
+          <FinanceForm deals={deals} disabled={!configured} record={recordToEdit} />
+        </div>
+
         <TableShell
           title="Finance records"
           description="Profit is calculated automatically from the values you enter."
@@ -160,10 +164,6 @@ export default async function FinancePage({
             </>
           )}
         </TableShell>
-
-        <div className="max-w-4xl">
-          <FinanceForm deals={deals} disabled={!configured} record={recordToEdit} />
-        </div>
       </div>
     </div>
   );

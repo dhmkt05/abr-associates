@@ -46,6 +46,15 @@ export default async function HelpersPage({
       />
 
       <div className="space-y-6">
+        <div className="max-w-4xl">
+          <HelperForm
+            helper={helperToEdit}
+            disabled={!configured}
+            redirectTo={params.q ? `/helpers?q=${encodeURIComponent(params.q)}` : "/helpers"}
+            cancelHref={params.q ? `/helpers?q=${encodeURIComponent(params.q)}` : "/helpers"}
+          />
+        </div>
+
         <TableShell
           title="Helpers"
           description="Keep helper records short, searchable, and easy to maintain."
@@ -186,10 +195,6 @@ export default async function HelpersPage({
             </>
           )}
         </TableShell>
-
-        <div className="max-w-4xl">
-          <HelperForm helper={helperToEdit} disabled={!configured} />
-        </div>
       </div>
     </div>
   );

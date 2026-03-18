@@ -43,6 +43,10 @@ export default async function DocumentationPage({
       />
 
       <div className="space-y-6">
+        <div className="max-w-4xl">
+          <DocumentationForm deals={deals} disabled={!configured} record={recordToEdit} />
+        </div>
+
         <TableShell
           title="Documentation records"
           description="Closed sales entries can move here for simple post-deal process tracking."
@@ -156,10 +160,6 @@ export default async function DocumentationPage({
             </>
           )}
         </TableShell>
-
-        <div className="max-w-4xl">
-          <DocumentationForm deals={deals} disabled={!configured} record={recordToEdit} />
-        </div>
       </div>
     </div>
   );
