@@ -8,6 +8,7 @@ import { buttonClassName } from "@/components/ui/button";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FlashMessage } from "@/components/ui/flash-message";
+import { RecordDetailsDialog } from "@/components/ui/record-details-dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { deleteDocumentationAction } from "@/lib/actions";
 import { getAppData } from "@/lib/data";
@@ -23,6 +24,7 @@ export default async function DocumentationPage({
 }: {
   searchParams: Promise<{
     edit?: string;
+    view?: string;
     type?: "success" | "error";
     message?: string;
   }>;
@@ -31,10 +33,31 @@ export default async function DocumentationPage({
   const params = await searchParams;
   const { deals, documentation } = await getAppData();
   const recordToEdit = documentation.find((record) => record.id === params.edit);
+  const recordToView = documentation.find((record) => record.id === params.view);
   const configured = isSupabaseConfigured();
 
   return (
     <div className="space-y-6">
+      {recordToView ? (
+        <RecordDetailsDialog
+          title={recordToView.deal?.employer?.employer_name ?? "Documentation details"}
+          subtitle={`Documentation record ${recordToView.deal?.employer?.employer_id ?? ""}`}
+          closeHref="/documentation"
+          fields={[
+            { label: "Employer ID", value: recordToView.deal?.employer?.employer_id ?? "-" },
+            { label: "Employer name", value: recordToView.deal?.employer?.employer_name ?? "-" },
+            { label: "Employer number", value: recordToView.deal?.employer?.employer_number ?? "-" },
+            { label: "Current process", value: recordToView.current_process },
+            {
+              label: "Upfront payment status",
+              value: <StatusBadge status={recordToView.upfront_payment_status} />,
+            },
+            { label: "Linked sales status", value: <StatusBadge status={recordToView.deal?.status ?? "prospect"} /> },
+            { label: "Created", value: formatDate(recordToView.created_at) },
+          ]}
+        />
+      ) : null}
+
       <FlashMessage type={params.type} message={params.message} />
       <TopHeader
         title="Documentation Tracker"
@@ -90,6 +113,12 @@ export default async function DocumentationPage({
 
                     <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                       <Link
+                        href={`/documentation?view=${record.id}`}
+                        className={`${buttonClassName("ghost")} w-full sm:w-auto`}
+                      >
+                        View
+                      </Link>
+                      <Link
                         href={`/documentation?edit=${record.id}`}
                         className={`${buttonClassName("secondary")} w-full sm:w-auto`}
                       >
@@ -136,6 +165,9 @@ export default async function DocumentationPage({
                       <td className="px-3 py-4">{formatDate(record.created_at)}</td>
                       <td className="px-3 py-4">
                         <div className="flex gap-2">
+                          <Link href={`/documentation?view=${record.id}`} className={buttonClassName("ghost")}>
+                            View
+                          </Link>
                           <Link href={`/documentation?edit=${record.id}`} className={buttonClassName("secondary")}>
                             Edit
                           </Link>

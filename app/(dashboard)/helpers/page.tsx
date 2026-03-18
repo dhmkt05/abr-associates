@@ -10,6 +10,7 @@ import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FlashMessage } from "@/components/ui/flash-message";
 import { Input } from "@/components/ui/input";
+import { RecordDetailsDialog } from "@/components/ui/record-details-dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { deleteHelperAction } from "@/lib/actions";
 import { getHelpers } from "@/lib/data";
@@ -26,6 +27,7 @@ export default async function HelpersPage({
   searchParams: Promise<{
     q?: string;
     edit?: string;
+    view?: string;
     type?: "success" | "error";
     message?: string;
   }>;
@@ -34,10 +36,29 @@ export default async function HelpersPage({
   const params = await searchParams;
   const helpers = await getHelpers(params.q);
   const helperToEdit = helpers.find((helper) => helper.id === params.edit);
+  const helperToView = helpers.find((helper) => helper.id === params.view);
   const configured = isSupabaseConfigured();
+  const baseHelpersHref = params.q ? `/helpers?q=${encodeURIComponent(params.q)}` : "/helpers";
 
   return (
     <div className="space-y-6">
+      {helperToView ? (
+        <RecordDetailsDialog
+          title={helperToView.name}
+          subtitle={`Helper record ${helperToView.helper_id}`}
+          closeHref={baseHelpersHref}
+          fields={[
+            { label: "Helper ID", value: helperToView.helper_id },
+            { label: "Name", value: helperToView.name },
+            { label: "Country", value: helperToView.country },
+            { label: "Type", value: helperToView.type },
+            { label: "Added by", value: helperToView.added_by },
+            { label: "Status", value: <StatusBadge status={helperToView.status} /> },
+            { label: "Created", value: formatDate(helperToView.created_at) },
+          ]}
+        />
+      ) : null}
+
       <FlashMessage type={params.type} message={params.message} />
       <TopHeader
         title="Helper Database"
@@ -119,6 +140,12 @@ export default async function HelpersPage({
 
                     <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                       <Link
+                        href={`/helpers?view=${helper.id}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`}
+                        className={`${buttonClassName("ghost")} w-full sm:w-auto`}
+                      >
+                        View
+                      </Link>
+                      <Link
                         href={`/helpers?edit=${helper.id}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`}
                         className={`${buttonClassName("secondary")} w-full sm:w-auto`}
                       >
@@ -167,6 +194,12 @@ export default async function HelpersPage({
                       <td className="px-3 py-4">{formatDate(helper.created_at)}</td>
                       <td className="px-3 py-4">
                         <div className="flex gap-2">
+                          <Link
+                            href={`/helpers?view=${helper.id}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`}
+                            className={buttonClassName("ghost")}
+                          >
+                            View
+                          </Link>
                           <Link
                             href={`/helpers?edit=${helper.id}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`}
                             className={buttonClassName("secondary")}

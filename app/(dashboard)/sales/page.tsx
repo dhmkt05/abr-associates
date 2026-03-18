@@ -8,6 +8,7 @@ import { buttonClassName } from "@/components/ui/button";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FlashMessage } from "@/components/ui/flash-message";
+import { RecordDetailsDialog } from "@/components/ui/record-details-dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { deleteDealAction } from "@/lib/actions";
 import { getAppData } from "@/lib/data";
@@ -23,6 +24,7 @@ export default async function SalesPage({
 }: {
   searchParams: Promise<{
     edit?: string;
+    view?: string;
     type?: "success" | "error";
     message?: string;
   }>;
@@ -31,10 +33,31 @@ export default async function SalesPage({
   const params = await searchParams;
   const { deals } = await getAppData();
   const dealToEdit = deals.find((deal) => deal.id === params.edit);
+  const dealToView = deals.find((deal) => deal.id === params.view);
   const configured = isSupabaseConfigured();
 
   return (
     <div className="space-y-6">
+      {dealToView ? (
+        <RecordDetailsDialog
+          title={dealToView.employer?.employer_name ?? "Sales details"}
+          subtitle={`Sales record ${dealToView.employer?.employer_id ?? ""}`}
+          closeHref="/sales"
+          fields={[
+            { label: "Employer ID", value: dealToView.employer?.employer_id ?? "-" },
+            { label: "Employer name", value: dealToView.employer?.employer_name ?? "-" },
+            { label: "Employer number", value: dealToView.employer?.employer_number ?? "-" },
+            { label: "Handled by", value: dealToView.handled_by },
+            { label: "Status", value: <StatusBadge status={dealToView.status} /> },
+            {
+              label: "Notes",
+              value: <div className="whitespace-pre-wrap">{dealToView.notes || "No notes"}</div>,
+            },
+            { label: "Created", value: formatDate(dealToView.created_at) },
+          ]}
+        />
+      ) : null}
+
       <FlashMessage type={params.type} message={params.message} />
       <TopHeader
         title="Sales Pipeline"
@@ -95,6 +118,9 @@ export default async function SalesPage({
                     </div>
 
                     <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                      <Link href={`/sales?view=${deal.id}`} className={`${buttonClassName("ghost")} w-full sm:w-auto`}>
+                        View
+                      </Link>
                       <Link href={`/sales?edit=${deal.id}`} className={`${buttonClassName("secondary")} w-full sm:w-auto`}>
                         Edit
                       </Link>
@@ -146,6 +172,9 @@ export default async function SalesPage({
                       <td className="px-3 py-4">{formatDate(deal.created_at)}</td>
                       <td className="px-3 py-4">
                         <div className="flex gap-2">
+                          <Link href={`/sales?view=${deal.id}`} className={buttonClassName("ghost")}>
+                            View
+                          </Link>
                           <Link href={`/sales?edit=${deal.id}`} className={buttonClassName("secondary")}>
                             Edit
                           </Link>

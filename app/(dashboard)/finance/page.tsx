@@ -8,6 +8,7 @@ import { buttonClassName } from "@/components/ui/button";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FlashMessage } from "@/components/ui/flash-message";
+import { RecordDetailsDialog } from "@/components/ui/record-details-dialog";
 import { deleteFinanceAction } from "@/lib/actions";
 import { getAppData } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -22,6 +23,7 @@ export default async function FinancePage({
 }: {
   searchParams: Promise<{
     edit?: string;
+    view?: string;
     type?: "success" | "error";
     message?: string;
   }>;
@@ -30,10 +32,31 @@ export default async function FinancePage({
   const params = await searchParams;
   const { deals, finance } = await getAppData();
   const recordToEdit = finance.find((record) => record.id === params.edit);
+  const recordToView = finance.find((record) => record.id === params.view);
   const configured = isSupabaseConfigured();
 
   return (
     <div className="space-y-6">
+      {recordToView ? (
+        <RecordDetailsDialog
+          title={recordToView.reference || recordToView.deal?.employer?.employer_name || "Finance details"}
+          subtitle={`Finance record from ${formatDate(recordToView.created_at)}`}
+          closeHref="/finance"
+          fields={[
+            { label: "Date", value: formatDate(recordToView.created_at) },
+            {
+              label: "Reference / employer",
+              value: recordToView.reference || recordToView.deal?.employer?.employer_name || "-",
+            },
+            { label: "Amount received", value: formatCurrency(recordToView.amount_received) },
+            { label: "Supplier payment", value: formatCurrency(recordToView.supplier_payment) },
+            { label: "Office expense", value: formatCurrency(recordToView.office_expense) },
+            { label: "Salary", value: formatCurrency(recordToView.salary) },
+            { label: "Profit", value: formatCurrency(recordToView.profit) },
+          ]}
+        />
+      ) : null}
+
       <FlashMessage type={params.type} message={params.message} />
       <TopHeader
         title="Finance Tracker"
@@ -97,6 +120,9 @@ export default async function FinancePage({
                     </div>
 
                     <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                      <Link href={`/finance?view=${record.id}`} className={`${buttonClassName("ghost")} w-full sm:w-auto`}>
+                        View
+                      </Link>
                       <Link href={`/finance?edit=${record.id}`} className={`${buttonClassName("secondary")} w-full sm:w-auto`}>
                         Edit
                       </Link>
@@ -140,6 +166,9 @@ export default async function FinancePage({
                       <td className="px-3 py-4 font-semibold text-emerald-700">{formatCurrency(record.profit)}</td>
                       <td className="px-3 py-4">
                         <div className="flex gap-2">
+                          <Link href={`/finance?view=${record.id}`} className={buttonClassName("ghost")}>
+                            View
+                          </Link>
                           <Link href={`/finance?edit=${record.id}`} className={buttonClassName("secondary")}>
                             Edit
                           </Link>
