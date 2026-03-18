@@ -17,6 +17,7 @@ export type DocumentationProcess =
   | "reach employer house"
   | "medical follow up";
 export type UpfrontPaymentStatus = "prospect" | "payment done";
+export type DocumentationWorkflowState = "active" | "inactive" | "cancelled";
 
 export interface Profile {
   id: string;
@@ -96,6 +97,7 @@ export interface SalesRow extends Deal {
 
 export interface DocumentationRow extends DocumentationCase {
   deal?: SalesRow;
+  workflow_state: DocumentationWorkflowState;
 }
 
 export interface FinanceRow extends FinanceRecord {

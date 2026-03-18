@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { requirePageAccess } from "@/lib/auth";
 import { TopHeader } from "@/components/layout/top-header";
 import { DealForm } from "@/components/sales/deal-form";
 import { TableShell } from "@/components/table-shell";
-import { buttonClassName } from "@/components/ui/button";
+import { Button, buttonClassName } from "@/components/ui/button";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FlashMessage } from "@/components/ui/flash-message";
+import { Input } from "@/components/ui/input";
 import { RecordDetailsDialog } from "@/components/ui/record-details-dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { deleteDealAction } from "@/lib/actions";
-import { getAppData } from "@/lib/data";
+import { getDeals } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formatDate } from "@/lib/utils";
 
@@ -23,6 +25,7 @@ export default async function SalesPage({
   searchParams,
 }: {
   searchParams: Promise<{
+    q?: string;
     edit?: string;
     view?: string;
     type?: "success" | "error";
@@ -31,10 +34,11 @@ export default async function SalesPage({
 }) {
   await requirePageAccess("sales");
   const params = await searchParams;
-  const { deals } = await getAppData();
+  const deals = await getDeals(params.q);
   const dealToEdit = deals.find((deal) => deal.id === params.edit);
   const dealToView = deals.find((deal) => deal.id === params.view);
   const configured = isSupabaseConfigured();
+  const baseSalesHref = params.q ? `/sales?q=${encodeURIComponent(params.q)}` : "/sales";
 
   return (
     <div className="space-y-6">
@@ -42,7 +46,7 @@ export default async function SalesPage({
         <RecordDetailsDialog
           title={dealToView.employer?.employer_name ?? "Sales details"}
           subtitle={`Sales record ${dealToView.employer?.employer_id ?? ""}`}
-          closeHref="/sales"
+          closeHref={baseSalesHref}
           fields={[
             { label: "Employer ID", value: dealToView.employer?.employer_id ?? "-" },
             { label: "Employer name", value: dealToView.employer?.employer_name ?? "-" },
@@ -67,12 +71,33 @@ export default async function SalesPage({
 
       <div className="space-y-6">
         <div className="max-w-4xl">
-          <DealForm disabled={!configured} deal={dealToEdit} />
+          <DealForm
+            disabled={!configured}
+            deal={dealToEdit}
+            redirectTo={baseSalesHref}
+            cancelHref={baseSalesHref}
+          />
         </div>
 
         <TableShell
           title="Sales entries"
           description="Update employer records fast and move them from prospect to closed deal."
+          actions={
+            <form className="flex w-full flex-col gap-3 sm:max-w-md sm:flex-row sm:items-center">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Input
+                  name="q"
+                  placeholder="Search employer, number, status, notes..."
+                  defaultValue={params.q}
+                  className="pl-10"
+                />
+              </div>
+              <Button type="submit" variant="secondary" className="w-full sm:w-auto">
+                Search
+              </Button>
+            </form>
+          }
         >
           {deals.length === 0 ? (
             <EmptyState
@@ -118,17 +143,17 @@ export default async function SalesPage({
                     </div>
 
                     <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                      <Link href={`/sales?view=${deal.id}`} className={`${buttonClassName("ghost")} w-full sm:w-auto`}>
+                      <Link href={`/sales?view=${deal.id}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`} className={`${buttonClassName("ghost")} w-full sm:w-auto`}>
                         View
                       </Link>
-                      <Link href={`/sales?edit=${deal.id}`} className={`${buttonClassName("secondary")} w-full sm:w-auto`}>
+                      <Link href={`/sales?edit=${deal.id}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`} className={`${buttonClassName("secondary")} w-full sm:w-auto`}>
                         Edit
                       </Link>
                       <form action={deleteDealAction} className="w-full sm:w-auto">
                         <input type="hidden" name="id" value={deal.id} />
                         <input type="hidden" name="employer_record_id" value={deal.employer?.id ?? ""} />
                         <input type="hidden" name="employer_name" value={deal.employer?.employer_name ?? ""} />
-                        <input type="hidden" name="redirect_to" value="/sales" />
+                        <input type="hidden" name="redirect_to" value={baseSalesHref} />
                         <ConfirmSubmitButton
                           variant="danger"
                           type="submit"
@@ -172,17 +197,17 @@ export default async function SalesPage({
                       <td className="px-3 py-4">{formatDate(deal.created_at)}</td>
                       <td className="px-3 py-4">
                         <div className="flex gap-2">
-                          <Link href={`/sales?view=${deal.id}`} className={buttonClassName("ghost")}>
+                          <Link href={`/sales?view=${deal.id}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`} className={buttonClassName("ghost")}>
                             View
                           </Link>
-                          <Link href={`/sales?edit=${deal.id}`} className={buttonClassName("secondary")}>
+                          <Link href={`/sales?edit=${deal.id}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`} className={buttonClassName("secondary")}>
                             Edit
                           </Link>
                           <form action={deleteDealAction}>
                             <input type="hidden" name="id" value={deal.id} />
                             <input type="hidden" name="employer_record_id" value={deal.employer?.id ?? ""} />
                             <input type="hidden" name="employer_name" value={deal.employer?.employer_name ?? ""} />
-                            <input type="hidden" name="redirect_to" value="/sales" />
+                            <input type="hidden" name="redirect_to" value={baseSalesHref} />
                             <ConfirmSubmitButton
                               variant="danger"
                               type="submit"

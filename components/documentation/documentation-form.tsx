@@ -25,10 +25,14 @@ export function DocumentationForm({
   deals,
   disabled,
   record,
+  redirectTo = "/documentation",
+  cancelHref = "/documentation",
 }: {
   deals: SalesRow[];
   disabled: boolean;
   record?: DocumentationRow;
+  redirectTo?: string;
+  cancelHref?: string;
 }) {
   const action = record ? updateDocumentationAction : createDocumentationAction;
   const currentDeal =
@@ -44,7 +48,7 @@ export function DocumentationForm({
       description="Documentation uses closed sales records so employer details do not need to be entered again."
     >
       <form action={action} className="mt-5 space-y-4">
-        <input type="hidden" name="redirect_to" value="/documentation" />
+        <input type="hidden" name="redirect_to" value={redirectTo} />
         {record ? <input type="hidden" name="id" value={record.id} /> : null}
         {record ? (
           <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between">
@@ -54,7 +58,7 @@ export function DocumentationForm({
                 Saving will update the current documentation row instead of adding another one.
               </p>
             </div>
-            <Link href="/documentation" className={buttonClassName("secondary")}>
+            <Link href={cancelHref} className={buttonClassName("secondary")}>
               Cancel edit
             </Link>
           </div>

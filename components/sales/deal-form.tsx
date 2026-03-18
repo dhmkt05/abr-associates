@@ -20,9 +20,13 @@ const salesStatuses = [
 export function DealForm({
   disabled,
   deal,
+  redirectTo = "/sales",
+  cancelHref = "/sales",
 }: {
   disabled: boolean;
   deal?: SalesRow;
+  redirectTo?: string;
+  cancelHref?: string;
 }) {
   const action = deal ? updateDealAction : createDealAction;
   const [status, setStatus] = useState<SalesStatus>(deal?.status ?? "prospect");
@@ -34,7 +38,7 @@ export function DealForm({
       description="Keep employer lead updates short so status changes can be recorded quickly."
     >
       <form action={action} className="mt-5 space-y-4">
-        <input type="hidden" name="redirect_to" value="/sales" />
+        <input type="hidden" name="redirect_to" value={redirectTo} />
         {deal ? <input type="hidden" name="id" value={deal.id} /> : null}
         {deal?.employer ? <input type="hidden" name="employer_record_id" value={deal.employer.id} /> : null}
         {deal ? (
@@ -45,7 +49,7 @@ export function DealForm({
                 Saving will update {deal.employer?.employer_name ?? "this employer"} instead of creating a new row.
               </p>
             </div>
-            <Link href="/sales" className={buttonClassName("secondary")}>
+            <Link href={cancelHref} className={buttonClassName("secondary")}>
               Cancel edit
             </Link>
           </div>

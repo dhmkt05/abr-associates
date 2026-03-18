@@ -10,10 +10,14 @@ export function FinanceForm({
   deals,
   disabled,
   record,
+  redirectTo = "/finance",
+  cancelHref = "/finance",
 }: {
   deals: SalesRow[];
   disabled: boolean;
   record?: FinanceRow;
+  redirectTo?: string;
+  cancelHref?: string;
 }) {
   const action = record ? updateFinanceAction : createFinanceAction;
   const currentDeal =
@@ -29,7 +33,7 @@ export function FinanceForm({
       description="Use a deal link when available, or type a direct reference for quick finance updates."
     >
       <form action={action} className="mt-5 space-y-4">
-        <input type="hidden" name="redirect_to" value="/finance" />
+        <input type="hidden" name="redirect_to" value={redirectTo} />
         {record ? <input type="hidden" name="id" value={record.id} /> : null}
         {record ? (
           <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between">
@@ -39,7 +43,7 @@ export function FinanceForm({
                 Saving will update this finance record and keep the values you entered.
               </p>
             </div>
-            <Link href="/finance" className={buttonClassName("secondary")}>
+            <Link href={cancelHref} className={buttonClassName("secondary")}>
               Cancel edit
             </Link>
           </div>

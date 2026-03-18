@@ -17,6 +17,7 @@ import type {
   DashboardMetrics,
   Deal,
   DocumentationCase,
+  DocumentationWorkflowState,
   DocumentationRow,
   Employer,
   FinanceRecord,
@@ -146,7 +147,24 @@ function withDocumentationRelations(
   return documentationCases.map((record) => ({
     ...record,
     deal: salesRows.find((deal) => deal.id === record.deal_id),
+    workflow_state: getDocumentationWorkflowState(
+      salesRows.find((deal) => deal.id === record.deal_id)?.status,
+    ),
   }));
+}
+
+function getDocumentationWorkflowState(
+  salesStatus: SalesStatus | undefined,
+): DocumentationWorkflowState {
+  if (salesStatus === "deal closed") {
+    return "active";
+  }
+
+  if (salesStatus === "deal cancelled") {
+    return "cancelled";
+  }
+
+  return "inactive";
 }
 
 function withFinanceRelations(
@@ -236,6 +254,76 @@ export async function getHelpers(search?: string) {
   );
 }
 
+export async function getDeals(search?: string) {
+  const { deals } = await getAppData();
+
+  if (!search) {
+    return deals;
+  }
+
+  const term = search.toLowerCase();
+  return deals.filter((deal) =>
+    [
+      deal.employer?.employer_id,
+      deal.employer?.employer_name,
+      deal.employer?.employer_number,
+      deal.handled_by,
+      deal.status,
+      deal.notes,
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(term),
+  );
+}
+
+export async function getDocumentationRecords(search?: string) {
+  const { documentation } = await getAppData();
+
+  if (!search) {
+    return documentation;
+  }
+
+  const term = search.toLowerCase();
+  return documentation.filter((record) =>
+    [
+      record.deal?.employer?.employer_id,
+      record.deal?.employer?.employer_name,
+      record.deal?.employer?.employer_number,
+      record.current_process,
+      record.upfront_payment_status,
+      record.workflow_state,
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(term),
+  );
+}
+
+export async function getFinanceRecords(search?: string) {
+  const { finance } = await getAppData();
+
+  if (!search) {
+    return finance;
+  }
+
+  const term = search.toLowerCase();
+  return finance.filter((record) =>
+    [
+      record.reference,
+      record.deal?.employer?.employer_name,
+      record.amount_received,
+      record.supplier_payment,
+      record.office_expense,
+      record.salary,
+      record.profit,
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(term),
+  );
+}
+
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const { helpers, deals, documentation, finance } = await getAppData();
 
@@ -245,7 +333,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
       (deal) => deal.status !== "deal closed" && deal.status !== "deal cancelled",
     ).length,
     dealsConfirmed: deals.filter((deal) => deal.status === "deal closed").length,
-    documentationCases: documentation.length,
+    documentationCases: documentation.filter((record) => record.workflow_state === "active").length,
     revenue: finance.reduce((total, item) => total + item.amount_received, 0),
     profit: finance.reduce((total, item) => total + item.profit, 0),
   };
@@ -300,7 +388,7 @@ export async function getRecentActivity(): Promise<ActivityItem[]> {
     ...documentation.map((record) => ({
       id: `documentation-${record.id}`,
       title: `Documentation: ${record.current_process}`,
-      description: `${record.deal?.employer?.employer_name ?? "Employer"} · ${record.upfront_payment_status}`,
+      description: `${record.deal?.employer?.employer_name ?? "Employer"} · ${record.upfront_payment_status} · ${record.workflow_state}`,
       created_at: record.created_at,
       category: "documentation" as const,
     })),
