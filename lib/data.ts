@@ -37,6 +37,9 @@ function normalizeSalesStatus(value: string | null | undefined): SalesStatus {
   if (normalized === "interview going" || normalized === "interview") return "interview going";
   if (normalized === "negotiation") return "negotiation";
   if (normalized === "deal closed" || normalized === "confirmed") return "deal closed";
+  if (normalized === "deal cancelled" || normalized === "cancelled" || normalized === "canceled") {
+    return "deal cancelled";
+  }
 
   return "prospect";
 }
@@ -92,6 +95,7 @@ function mapDeal(row: Record<string, unknown>): Deal {
     helper_id: row.helper_id ? String(row.helper_id) : null,
     handled_by: String(row.handled_by ?? row.sales_staff ?? ""),
     status: normalizeSalesStatus(String(row.status ?? row.sales_stage ?? "")),
+    notes: String(row.notes ?? ""),
     created_at: String(row.created_at ?? new Date().toISOString()),
   };
 }
@@ -238,7 +242,9 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
 
   return {
     totalHelpers: helpers.length,
-    activeLeads: deals.filter((deal) => deal.status !== "deal closed").length,
+    activeLeads: deals.filter(
+      (deal) => deal.status !== "deal closed" && deal.status !== "deal cancelled",
+    ).length,
     dealsConfirmed: deals.filter((deal) => deal.status === "deal closed").length,
     documentationCases: documentation.length,
     revenue: finance.reduce((total, item) => total + item.amount_received, 0),
@@ -288,7 +294,7 @@ export async function getRecentActivity(): Promise<ActivityItem[]> {
     ...deals.map((deal) => ({
       id: `deal-${deal.id}`,
       title: `Sales status: ${deal.employer?.employer_name ?? "Employer"}`,
-      description: `${deal.status} · ${deal.handled_by || "Admin"}`,
+      description: `${deal.status} · ${deal.handled_by || "Admin"}${deal.notes ? ` · ${deal.notes}` : ""}`,
       created_at: deal.created_at,
       category: "deal" as const,
     })),

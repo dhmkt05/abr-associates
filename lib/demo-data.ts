@@ -76,6 +76,7 @@ export const demoDeals: Deal[] = [
     helper_id: null,
     handled_by: "Admin",
     status: "interview going",
+    notes: "",
     created_at: "2026-03-11T07:45:00.000Z",
   },
   {
@@ -84,6 +85,7 @@ export const demoDeals: Deal[] = [
     helper_id: null,
     handled_by: "Admin",
     status: "deal closed",
+    notes: "",
     created_at: "2026-03-12T09:20:00.000Z",
   },
   {
@@ -92,6 +94,7 @@ export const demoDeals: Deal[] = [
     helper_id: null,
     handled_by: "Admin",
     status: "negotiation",
+    notes: "",
     created_at: "2026-03-15T12:00:00.000Z",
   },
 ];

@@ -24,7 +24,8 @@ alter table public.deals
 
 alter table public.deals
   add column if not exists handled_by text not null default 'Admin',
-  add column if not exists status text not null default 'prospect';
+  add column if not exists status text not null default 'prospect',
+  add column if not exists notes text not null default '';
 
 update public.deals
 set
@@ -35,7 +36,8 @@ set
     when 'negotiation' then 'negotiation'
     when 'confirmed' then 'deal closed'
     else coalesce(nullif(status, ''), 'prospect')
-  end;
+  end,
+  notes = coalesce(notes, '');
 
 alter table public.documentation_cases
   add column if not exists current_process text not null default 'applying IPA',

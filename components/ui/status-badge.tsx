@@ -8,6 +8,7 @@ const statusToneMap: Record<string, "neutral" | "success" | "warning" | "danger"
   "interview going": "warning",
   negotiation: "accent",
   "deal closed": "success",
+  "deal cancelled": "danger",
   "applying IPA": "accent",
   "work permit": "accent",
   "going to take flight": "warning",

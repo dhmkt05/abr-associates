@@ -89,6 +89,20 @@ async function ensureDocumentationCaseForDeal(
   return data.id as string;
 }
 
+function getDealNotes(formData: FormData, status: string, redirectTo: string) {
+  const notes = String(formData.get("notes") ?? "").trim();
+
+  if (status === "deal cancelled" && !notes) {
+    redirectWithMessage(
+      redirectTo,
+      "error",
+      "Notes / Reason is required when a sales entry is marked as deal cancelled.",
+    );
+  }
+
+  return notes;
+}
+
 export async function signOutAction() {
   const supabase = await getSupabaseServerClient();
 
@@ -207,6 +221,7 @@ export async function createDealAction(formData: FormData) {
   const employerNumber = String(formData.get("employer_number") ?? "");
   const handledBy = String(formData.get("handled_by") ?? "Admin");
   const status = String(formData.get("status") ?? "prospect");
+  const notes = getDealNotes(formData, status, redirectTo);
 
   const { data: employer, error: employerError } = await supabase!
       .from("employers")
@@ -237,8 +252,9 @@ export async function createDealAction(formData: FormData) {
       helper_id: null,
       handled_by: handledBy,
       status,
+      notes,
     })
-    .select("id,status")
+    .select("id,status,notes")
     .single();
 
   revalidateDashboardRoutes();
@@ -255,7 +271,7 @@ export async function createDealAction(formData: FormData) {
     action: "sales_lead_created",
     entityType: "deal",
     entityId: data.id,
-    description: `Created sales lead for ${employerName} with status ${status}`,
+    description: `Created sales lead for ${employerName} with status ${status}${notes ? ` · ${notes}` : ""}`,
   });
   redirectWithMessage(redirectTo, "success", "Sales entry saved successfully.");
 }
@@ -279,6 +295,7 @@ export async function updateDealAction(formData: FormData) {
   const status = String(formData.get("status") ?? "prospect");
   const handledBy = String(formData.get("handled_by") ?? "Admin");
   const employerName = String(formData.get("employer_name") ?? "");
+  const notes = getDealNotes(formData, status, redirectTo);
 
   const { error: employerError } = await supabase!
     .from("employers")
@@ -300,6 +317,7 @@ export async function updateDealAction(formData: FormData) {
     .update({
       handled_by: handledBy,
       status,
+      notes,
     })
     .eq("id", id);
 
@@ -314,7 +332,7 @@ export async function updateDealAction(formData: FormData) {
     action: "deal_stage_updated",
     entityType: "deal",
     entityId: id,
-    description: `Updated ${employerName} to ${status}`,
+    description: `Updated ${employerName} to ${status}${notes ? ` · ${notes}` : ""}`,
   });
   redirectWithMessage(redirectTo, "success", "Sales entry updated successfully.");
 }

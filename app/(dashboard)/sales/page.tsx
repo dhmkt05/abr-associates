@@ -86,6 +86,12 @@ export default async function SalesPage({
                         <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Created</p>
                         <p className="mt-1 font-medium text-slate-900">{formatDate(deal.created_at)}</p>
                       </div>
+                      <div className="col-span-2">
+                        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Notes</p>
+                        <p className="mt-1 line-clamp-2 font-medium text-slate-900" title={deal.notes || "No notes"}>
+                          {deal.notes || "No notes"}
+                        </p>
+                      </div>
                     </div>
 
                     <div className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -115,7 +121,7 @@ export default async function SalesPage({
               <table className="hidden min-w-full text-left text-sm lg:table">
                 <thead className="text-xs uppercase tracking-[0.18em] text-slate-400">
                   <tr>
-                    {["Employer ID", "Employer Name", "Employer Number", "Handled By", "Status", "Created", "Actions"].map((head) => (
+                    {["Employer ID", "Employer Name", "Employer Number", "Handled By", "Status", "Notes", "Created", "Actions"].map((head) => (
                       <th key={head} className="px-3 py-3 font-medium">
                         {head}
                       </th>
@@ -131,6 +137,11 @@ export default async function SalesPage({
                       <td className="px-3 py-4">{deal.handled_by}</td>
                       <td className="px-3 py-4">
                         <StatusBadge status={deal.status} />
+                      </td>
+                      <td className="max-w-52 px-3 py-4">
+                        <span className="block truncate" title={deal.notes || "No notes"}>
+                          {deal.notes || "No notes"}
+                        </span>
                       </td>
                       <td className="px-3 py-4">{formatDate(deal.created_at)}</td>
                       <td className="px-3 py-4">

@@ -56,7 +56,7 @@ export default async function DashboardPage() {
     getAppData(),
   ]);
 
-  const stageBreakdown = ["prospect", "interview going", "negotiation", "deal closed"].map((label) => ({
+  const stageBreakdown = ["prospect", "interview going", "negotiation", "deal closed", "deal cancelled"].map((label) => ({
     name: label,
     value: appData.deals.filter((item) => item.status === label).length,
   }));

@@ -1,9 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import { createDealAction, updateDealAction } from "@/lib/actions";
-import type { SalesRow } from "@/lib/types";
+import type { SalesRow, SalesStatus } from "@/lib/types";
 import { FormSection } from "@/components/ui/form-section";
 import { buttonClassName } from "@/components/ui/button";
-import { Input, Select } from "@/components/ui/input";
+import { Input, Select, Textarea } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 const salesStatuses = [
@@ -11,6 +14,7 @@ const salesStatuses = [
   "interview going",
   "negotiation",
   "deal closed",
+  "deal cancelled",
 ] as const;
 
 export function DealForm({
@@ -21,6 +25,8 @@ export function DealForm({
   deal?: SalesRow;
 }) {
   const action = deal ? updateDealAction : createDealAction;
+  const [status, setStatus] = useState<SalesStatus>(deal?.status ?? "prospect");
+  const notesRequired = status === "deal cancelled";
 
   return (
     <FormSection
@@ -83,13 +89,33 @@ export function DealForm({
           </label>
           <label className="block md:col-span-2">
             <span className="mb-2 block text-sm font-medium text-slate-700">Status</span>
-            <Select name="status" defaultValue={deal?.status ?? "prospect"} disabled={disabled}>
+            <Select
+              name="status"
+              value={status}
+              disabled={disabled}
+              onChange={(event) => setStatus(event.target.value as SalesStatus)}
+            >
               {salesStatuses.map((status) => (
                 <option key={status} value={status}>
                   {status}
                 </option>
               ))}
             </Select>
+          </label>
+          <label className="block md:col-span-2">
+            <span className="mb-2 block text-sm font-medium text-slate-700">Notes / Reason</span>
+            <Textarea
+              name="notes"
+              defaultValue={deal?.notes ?? ""}
+              required={notesRequired}
+              disabled={disabled}
+              placeholder="Add cancellation reason or any extra sales notes."
+            />
+            <span className="mt-2 block text-xs text-slate-500">
+              {notesRequired
+                ? "Notes are required when the deal is marked as cancelled."
+                : "Use this for cancellation reasons or any extra comments."}
+            </span>
           </label>
         </div>
 

@@ -27,6 +27,7 @@ create table if not exists public.deals (
   helper_id uuid references public.helpers(id) on delete restrict,
   handled_by text not null default 'Admin',
   status text not null default 'prospect',
+  notes text not null default '',
   created_at timestamptz not null default now()
 );
 

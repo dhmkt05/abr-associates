@@ -4,7 +4,8 @@ export type SalesStatus =
   | "prospect"
   | "interview going"
   | "negotiation"
-  | "deal closed";
+  | "deal closed"
+  | "deal cancelled";
 export type DocumentationProcess =
   | "applying IPA"
   | "work permit"
@@ -61,6 +62,7 @@ export interface Deal {
   helper_id: string | null;
   handled_by: string;
   status: SalesStatus;
+  notes: string;
   created_at: string;
 }
 
