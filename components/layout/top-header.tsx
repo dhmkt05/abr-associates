@@ -1,6 +1,6 @@
 import { CalendarDays, ChevronRight, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getCurrentUserProfile } from "@/lib/auth";
+import { getCurrentUserProfile, getRoleLabel } from "@/lib/auth";
 import { signOutAction } from "@/lib/actions";
 
 export async function TopHeader({
@@ -59,7 +59,7 @@ export async function TopHeader({
               {profile?.full_name || "Manager"}
             </p>
             <p className="text-xs text-slate-500">
-              admin
+              {profile ? getRoleLabel(profile.role) : "User"}
             </p>
           </div>
         </div>

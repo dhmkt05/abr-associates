@@ -25,7 +25,7 @@ export async function logActivity({
   await supabase.from("activity_logs").insert({
     user_id: user.id,
     user_email: profile?.email ?? user.email ?? "admin",
-    role: "admin",
+    role: profile?.role ?? "admin",
     action,
     entity_type: entityType,
     entity_id: entityId,

@@ -4,6 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
+  canRoleAccessPage,
+  type ProtectedPage,
+} from "@/lib/access-control";
+import type { AppRole } from "@/lib/types";
+import {
   BarChart3,
   BriefcaseBusiness,
   ChevronLeft,
@@ -22,30 +27,38 @@ import { cn } from "@/lib/utils";
 const navigationGroups = [
   {
     label: "Overview",
-    items: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
+    items: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, page: "dashboard" as ProtectedPage }],
   },
   {
     label: "Operations",
     items: [
-      { href: "/helpers", label: "Helpers", icon: Users },
-      { href: "/sales", label: "Sales", icon: BriefcaseBusiness },
-      { href: "/documentation", label: "Documentation", icon: FileText },
-      { href: "/finance", label: "Finance", icon: CircleDollarSign },
+      { href: "/helpers", label: "Helpers", icon: Users, page: "helpers" as ProtectedPage },
+      { href: "/sales", label: "Sales", icon: BriefcaseBusiness, page: "sales" as ProtectedPage },
+      { href: "/documentation", label: "Documentation", icon: FileText, page: "documentation" as ProtectedPage },
+      { href: "/finance", label: "Finance", icon: CircleDollarSign, page: "finance" as ProtectedPage },
     ],
   },
   {
     label: "Management",
     items: [
-      { href: "/reports", label: "Reports", icon: BarChart3 },
-      { href: "/settings", label: "Settings", icon: Settings },
+      { href: "/reports", label: "Reports", icon: BarChart3, page: "reports" as ProtectedPage },
+      { href: "/settings", label: "Settings", icon: Settings, page: "settings" as ProtectedPage },
     ],
   },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({ role }: { role?: AppRole }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const filteredNavigation = role
+    ? navigationGroups
+        .map((group) => ({
+          ...group,
+          items: group.items.filter((item) => canRoleAccessPage(role, item.page)),
+        }))
+        .filter((group) => group.items.length > 0)
+    : navigationGroups;
 
   const sidebarContent = (
     <div
@@ -73,7 +86,7 @@ export function AppSidebar() {
       </div>
 
       <div className="mt-6 space-y-6">
-        {navigationGroups.map((group) => (
+        {filteredNavigation.map((group) => (
           <div key={group.label}>
             <p className={cn("px-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400", collapsed && "xl:hidden")}>
               {group.label}

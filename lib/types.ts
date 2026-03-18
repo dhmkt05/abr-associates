@@ -1,3 +1,4 @@
+export type AppRole = "admin" | "helper_team" | "sales_team" | "documentation_team";
 export type HelperStatus = string;
 export type HelperCountry = "Myanmar" | "India" | "Indonesia" | "Other";
 export type HelperType = "Ex-Singapore" | "New" | "Transfer";
@@ -21,6 +22,7 @@ export interface Profile {
   id: string;
   email: string;
   full_name: string;
+  role: AppRole;
   created_at: string;
 }
 
