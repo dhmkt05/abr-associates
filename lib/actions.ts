@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { logActivity } from "@/lib/activity";
+import { resolveHelperCountry, resolveHelperType } from "@/lib/helper-options";
 import { getCurrentUserProfile } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import { buildRedirectUrl, parseNumber } from "@/lib/utils";
@@ -119,7 +120,10 @@ export async function createHelperAction(formData: FormData) {
   await requireAuthenticatedUser();
   const redirectTo = getRedirectTo(formData, "/helpers");
 
-  const country = String(formData.get("country") ?? "");
+  const rawCountry = String(formData.get("country") ?? "");
+  const rawType = String(formData.get("type") ?? "");
+  const country = resolveHelperCountry(rawCountry, rawType);
+  const type = resolveHelperType(rawType, rawCountry);
 
   const { data, error } = await supabase!
     .from("helpers")
@@ -127,7 +131,7 @@ export async function createHelperAction(formData: FormData) {
       helper_id: String(formData.get("helper_id") ?? ""),
       name: String(formData.get("name") ?? ""),
       country,
-      type: String(formData.get("type") ?? "other"),
+      type,
       added_by: String(formData.get("added_by") ?? "Admin"),
       status: String(formData.get("status") ?? "active"),
     })
@@ -161,7 +165,10 @@ export async function updateHelperAction(formData: FormData) {
   }
 
   const name = String(formData.get("name") ?? "");
-  const country = String(formData.get("country") ?? "");
+  const rawCountry = String(formData.get("country") ?? "");
+  const rawType = String(formData.get("type") ?? "");
+  const country = resolveHelperCountry(rawCountry, rawType);
+  const type = resolveHelperType(rawType, rawCountry);
 
   const { error } = await supabase!
     .from("helpers")
@@ -169,7 +176,7 @@ export async function updateHelperAction(formData: FormData) {
       helper_id: String(formData.get("helper_id") ?? ""),
       name,
       country,
-      type: String(formData.get("type") ?? "other"),
+      type,
       added_by: String(formData.get("added_by") ?? "Admin"),
       status: String(formData.get("status") ?? "active"),
     })

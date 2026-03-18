@@ -1,5 +1,6 @@
 export type HelperStatus = string;
-export type HelperType = "my" | "indo" | "india" | "other";
+export type HelperCountry = "Myanmar" | "India" | "Indonesia" | "Other";
+export type HelperType = "Ex-Singapore" | "New" | "Transfer";
 export type SalesStatus =
   | "prospect"
   | "interview going"
@@ -39,7 +40,7 @@ export interface Helper {
   id: string;
   helper_id: string;
   name: string;
-  country: string;
+  country: HelperCountry;
   type: HelperType;
   added_by: string;
   status: HelperStatus;

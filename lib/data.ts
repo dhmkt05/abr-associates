@@ -1,5 +1,9 @@
 import { getCurrentUser } from "@/lib/supabase/server";
 import {
+  resolveHelperCountry,
+  resolveHelperType,
+} from "@/lib/helper-options";
+import {
   demoDeals,
   demoDocumentationCases,
   demoEmployers,
@@ -21,14 +25,6 @@ import type {
   SalesRow,
   SalesStatus,
 } from "@/lib/types";
-
-function normalizeHelperType(value: string | null | undefined): Helper["type"] {
-  if (value === "my" || value === "indo" || value === "india" || value === "other") {
-    return value;
-  }
-
-  return "other";
-}
 
 function normalizeSalesStatus(value: string | null | undefined): SalesStatus {
   const normalized = (value ?? "").toLowerCase();
@@ -64,12 +60,15 @@ function normalizeUpfrontPaymentStatus(value: string | null | undefined): Docume
 }
 
 function mapHelper(row: Record<string, unknown>): Helper {
+  const rawCountry = String(row.country ?? row.nationality ?? "");
+  const rawType = String(row.type ?? "");
+
   return {
     id: String(row.id),
     helper_id: String(row.helper_id ?? ""),
     name: String(row.name ?? ""),
-    country: String(row.country ?? row.nationality ?? ""),
-    type: normalizeHelperType(String(row.type ?? "")),
+    country: resolveHelperCountry(rawCountry, rawType),
+    type: resolveHelperType(rawType, rawCountry),
     added_by: String(row.added_by ?? "Admin"),
     status: String(row.status ?? "active"),
     created_at: String(row.created_at ?? new Date().toISOString()),

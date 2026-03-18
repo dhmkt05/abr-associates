@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { createHelperAction, updateHelperAction } from "@/lib/actions";
 import type { Helper } from "@/lib/types";
+import { helperCountries, helperTypes } from "@/lib/helper-options";
 import { FormSection } from "@/components/ui/form-section";
 import { buttonClassName } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
-
-const helperTypes = ["my", "indo", "india", "other"] as const;
 
 export function HelperForm({
   helper,
@@ -53,11 +52,17 @@ export function HelperForm({
           </label>
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">Country</span>
-            <Input name="country" defaultValue={helper?.country} required disabled={disabled} />
+            <Select name="country" defaultValue={helper?.country ?? "Other"} disabled={disabled}>
+              {helperCountries.map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+            </Select>
           </label>
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">Type</span>
-            <Select name="type" defaultValue={helper?.type ?? "other"} disabled={disabled}>
+            <Select name="type" defaultValue={helper?.type ?? "New"} disabled={disabled}>
               {helperTypes.map((type) => (
                 <option key={type} value={type}>
                   {type}

@@ -1,8 +1,8 @@
 insert into public.helpers (helper_id, name, country, type, added_by, status)
 values
-  ('ABR-H-101', 'Maria Lopez', 'Myanmar', 'my', 'Admin', 'active'),
-  ('ABR-H-102', 'Siti Rahmah', 'Indonesia', 'indo', 'Admin', 'follow up'),
-  ('ABR-H-103', 'Asha Kumari', 'India', 'india', 'Admin', 'active')
+  ('ABR-H-101', 'Maria Lopez', 'Myanmar', 'Ex-Singapore', 'Admin', 'active'),
+  ('ABR-H-102', 'Siti Rahmah', 'Indonesia', 'New', 'Admin', 'follow up'),
+  ('ABR-H-103', 'Asha Kumari', 'India', 'Transfer', 'Admin', 'active')
 on conflict (helper_id) do nothing;
 
 insert into public.employers (employer_id, employer_name, employer_number, handled_by, status)
