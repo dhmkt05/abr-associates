@@ -6,16 +6,17 @@ import { DocumentationForm } from "@/components/documentation/documentation-form
 import { TopHeader } from "@/components/layout/top-header";
 import { TableShell } from "@/components/table-shell";
 import { Button, buttonClassName } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FlashMessage } from "@/components/ui/flash-message";
-import { Input } from "@/components/ui/input";
+import { Input, Select } from "@/components/ui/input";
 import { RecordDetailsDialog } from "@/components/ui/record-details-dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { deleteDocumentationAction } from "@/lib/actions";
 import { getAppData, getDocumentationRecords } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
-import { formatDate } from "@/lib/utils";
+import { buildRedirectUrl, cn, formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Documentation",
@@ -26,6 +27,9 @@ export default async function DocumentationPage({
 }: {
   searchParams: Promise<{
     q?: string;
+    staff?: string;
+    process?: string;
+    payment?: string;
     edit?: string;
     view?: string;
     type?: "success" | "error";
@@ -34,18 +38,46 @@ export default async function DocumentationPage({
 }) {
   await requirePageAccess("documentation");
   const params = await searchParams;
-  const [{ deals }, documentation] = await Promise.all([
+  const [{ deals, documentation: allDocumentation }, documentation] = await Promise.all([
     getAppData(),
-    getDocumentationRecords(params.q),
+    getDocumentationRecords(params.q, {
+      assignedStaff: params.staff,
+      currentProcess: params.process,
+      upfrontPaymentStatus: params.payment,
+    }),
   ]);
   const recordToEdit = documentation.find((record) => record.id === params.edit);
   const recordToView = documentation.find((record) => record.id === params.view);
   const configured = isSupabaseConfigured();
-  const baseDocumentationHref = params.q
-    ? `/documentation?q=${encodeURIComponent(params.q)}`
-    : "/documentation";
+  const baseDocumentationHref = buildRedirectUrl("/documentation", {
+    q: params.q,
+    staff: params.staff,
+    process: params.process,
+    payment: params.payment,
+  });
   const activeDocumentation = documentation.filter((record) => record.workflow_state === "active");
   const historyDocumentation = documentation.filter((record) => record.workflow_state !== "active");
+  const assignedStaffOptions = Array.from(
+    new Set(allDocumentation.map((record) => record.assigned_staff).filter(Boolean)),
+  ).sort();
+  const processOptions = Array.from(new Set(allDocumentation.map((record) => record.current_process))).sort();
+  const paymentOptions = Array.from(new Set(allDocumentation.map((record) => record.upfront_payment_status))).sort();
+  const inProgressCount = documentation.filter((record) =>
+    ["applying IPA", "work permit", "going to take flight", "flight ticket", "insurance"].includes(
+      record.current_process,
+    ),
+  ).length;
+  const completedCount = documentation.filter((record) =>
+    ["reach employer house", "medical follow up"].includes(record.current_process),
+  ).length;
+  const cancelledCount = documentation.filter((record) => record.workflow_state === "cancelled").length;
+  const documentationSummary = [
+    { label: "Total Cases", value: documentation.length, tone: "slate" },
+    { label: "Active", value: activeDocumentation.length, tone: "emerald" },
+    { label: "In Progress", value: inProgressCount, tone: "sky" },
+    { label: "Completed", value: completedCount, tone: "indigo" },
+    { label: "Cancelled", value: cancelledCount, tone: "rose" },
+  ];
 
   return (
     <div className="space-y-6">
@@ -88,12 +120,30 @@ export default async function DocumentationPage({
           />
         </div>
 
-        <TableShell
-          title="Documentation records"
-          description="Closed sales entries stay active here. Records from deals that move away from closed remain preserved in history."
-          actions={
-            <form className="flex w-full flex-col gap-3 sm:max-w-md sm:flex-row sm:items-center">
-              <div className="relative flex-1">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          {documentationSummary.map((item) => (
+            <Card key={item.label} className={cn(
+              item.tone === "emerald" && "bg-emerald-50/70",
+              item.tone === "sky" && "bg-sky-50/70",
+              item.tone === "indigo" && "bg-indigo-50/70",
+              item.tone === "rose" && "bg-rose-50/70",
+            )}>
+              <p className="text-sm text-slate-500">{item.label}</p>
+              <p className="mt-2 text-3xl font-semibold text-slate-950">{item.value}</p>
+            </Card>
+          ))}
+        </section>
+
+        <Card>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Filter documentation</h3>
+              <p className="text-sm text-slate-500">
+                Combine search with staff, process, and payment filters to focus the workflow.
+              </p>
+            </div>
+            <form className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+              <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
                   name="q"
@@ -102,11 +152,45 @@ export default async function DocumentationPage({
                   className="pl-10"
                 />
               </div>
-              <Button type="submit" variant="secondary" className="w-full sm:w-auto">
-                Search
-              </Button>
+              <Select name="staff" defaultValue={params.staff ?? ""}>
+                <option value="">All staff</option>
+                {assignedStaffOptions.map((staff) => (
+                  <option key={staff} value={staff}>
+                    {staff}
+                  </option>
+                ))}
+              </Select>
+              <Select name="process" defaultValue={params.process ?? ""}>
+                <option value="">All processes</option>
+                {processOptions.map((process) => (
+                  <option key={process} value={process}>
+                    {process}
+                  </option>
+                ))}
+              </Select>
+              <Select name="payment" defaultValue={params.payment ?? ""}>
+                <option value="">All payments</option>
+                {paymentOptions.map((payment) => (
+                  <option key={payment} value={payment}>
+                    {payment}
+                  </option>
+                ))}
+              </Select>
+              <div className="flex gap-3">
+                <Button type="submit" variant="secondary">
+                  Apply
+                </Button>
+                <Link href="/documentation" className={buttonClassName("ghost")}>
+                  Clear
+                </Link>
+              </div>
             </form>
-          }
+          </div>
+        </Card>
+
+        <TableShell
+          title="Documentation records"
+          description="Closed sales entries stay active here. Records from deals that move away from closed remain preserved in history."
         >
           {documentation.length === 0 ? (
             <EmptyState

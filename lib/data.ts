@@ -104,6 +104,7 @@ function mapDocumentationCase(row: Record<string, unknown>): DocumentationCase {
   return {
     id: String(row.id),
     deal_id: String(row.deal_id ?? ""),
+    assigned_staff: String(row.assigned_staff ?? row.handled_by ?? ""),
     current_process: normalizeDocumentationProcess(String(row.current_process ?? row.stage ?? "")),
     upfront_payment_status: normalizeUpfrontPaymentStatus(
       String(row.upfront_payment_status ?? row.status ?? ""),
@@ -147,6 +148,8 @@ function withDocumentationRelations(
   return documentationCases.map((record) => ({
     ...record,
     deal: salesRows.find((deal) => deal.id === record.deal_id),
+    assigned_staff:
+      record.assigned_staff || salesRows.find((deal) => deal.id === record.deal_id)?.handled_by || "Admin",
     workflow_state: getDocumentationWorkflowState(
       salesRows.find((deal) => deal.id === record.deal_id)?.status,
     ),
@@ -238,15 +241,24 @@ export async function getAppData() {
   };
 }
 
-export async function getHelpers(search?: string) {
+export async function getHelpers(
+  search?: string,
+  filters?: { addedBy?: string; status?: string },
+) {
   const { helpers } = await getAppData();
+  const filtered = helpers.filter((helper) => {
+    const staffMatches = filters?.addedBy ? helper.added_by === filters.addedBy : true;
+    const statusMatches = filters?.status ? helper.status === filters.status : true;
+
+    return staffMatches && statusMatches;
+  });
 
   if (!search) {
-    return helpers;
+    return filtered;
   }
 
   const term = search.toLowerCase();
-  return helpers.filter((helper) =>
+  return filtered.filter((helper) =>
     [helper.helper_id, helper.name, helper.country, helper.type, helper.added_by, helper.status]
       .join(" ")
       .toLowerCase()
@@ -254,15 +266,24 @@ export async function getHelpers(search?: string) {
   );
 }
 
-export async function getDeals(search?: string) {
+export async function getDeals(
+  search?: string,
+  filters?: { handledBy?: string; status?: string },
+) {
   const { deals } = await getAppData();
+  const filtered = deals.filter((deal) => {
+    const handlerMatches = filters?.handledBy ? deal.handled_by === filters.handledBy : true;
+    const statusMatches = filters?.status ? deal.status === filters.status : true;
+
+    return handlerMatches && statusMatches;
+  });
 
   if (!search) {
-    return deals;
+    return filtered;
   }
 
   const term = search.toLowerCase();
-  return deals.filter((deal) =>
+  return filtered.filter((deal) =>
     [
       deal.employer?.employer_id,
       deal.employer?.employer_name,
@@ -277,16 +298,29 @@ export async function getDeals(search?: string) {
   );
 }
 
-export async function getDocumentationRecords(search?: string) {
+export async function getDocumentationRecords(
+  search?: string,
+  filters?: { assignedStaff?: string; currentProcess?: string; upfrontPaymentStatus?: string },
+) {
   const { documentation } = await getAppData();
+  const filtered = documentation.filter((record) => {
+    const staffMatches = filters?.assignedStaff ? record.assigned_staff === filters.assignedStaff : true;
+    const processMatches = filters?.currentProcess ? record.current_process === filters.currentProcess : true;
+    const paymentMatches = filters?.upfrontPaymentStatus
+      ? record.upfront_payment_status === filters.upfrontPaymentStatus
+      : true;
+
+    return staffMatches && processMatches && paymentMatches;
+  });
 
   if (!search) {
-    return documentation;
+    return filtered;
   }
 
   const term = search.toLowerCase();
-  return documentation.filter((record) =>
+  return filtered.filter((record) =>
     [
+      record.assigned_staff,
       record.deal?.employer?.employer_id,
       record.deal?.employer?.employer_name,
       record.deal?.employer?.employer_number,

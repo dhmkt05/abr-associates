@@ -103,6 +103,7 @@ export const demoDocumentationCases: DocumentationCase[] = [
   {
     id: "c1",
     deal_id: "d2",
+    assigned_staff: "Admin",
     current_process: "applying IPA",
     upfront_payment_status: "payment done",
     created_at: "2026-03-13T08:10:00.000Z",

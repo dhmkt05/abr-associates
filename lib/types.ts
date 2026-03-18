@@ -73,6 +73,7 @@ export interface Deal {
 export interface DocumentationCase {
   id: string;
   deal_id: string;
+  assigned_staff: string;
   current_process: DocumentationProcess;
   upfront_payment_status: UpfrontPaymentStatus;
   created_at: string;

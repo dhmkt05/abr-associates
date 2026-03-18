@@ -6,16 +6,17 @@ import { TopHeader } from "@/components/layout/top-header";
 import { DealForm } from "@/components/sales/deal-form";
 import { TableShell } from "@/components/table-shell";
 import { Button, buttonClassName } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FlashMessage } from "@/components/ui/flash-message";
-import { Input } from "@/components/ui/input";
+import { Input, Select } from "@/components/ui/input";
 import { RecordDetailsDialog } from "@/components/ui/record-details-dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { deleteDealAction } from "@/lib/actions";
-import { getDeals } from "@/lib/data";
+import { getAppData, getDeals } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
-import { formatDate } from "@/lib/utils";
+import { buildRedirectUrl, cn, formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Sales",
@@ -26,6 +27,8 @@ export default async function SalesPage({
 }: {
   searchParams: Promise<{
     q?: string;
+    staff?: string;
+    status?: string;
     edit?: string;
     view?: string;
     type?: "success" | "error";
@@ -34,11 +37,37 @@ export default async function SalesPage({
 }) {
   await requirePageAccess("sales");
   const params = await searchParams;
-  const deals = await getDeals(params.q);
+  const [{ deals: allDeals }, deals] = await Promise.all([
+    getAppData(),
+    getDeals(params.q, {
+      handledBy: params.staff,
+      status: params.status,
+    }),
+  ]);
   const dealToEdit = deals.find((deal) => deal.id === params.edit);
   const dealToView = deals.find((deal) => deal.id === params.view);
   const configured = isSupabaseConfigured();
-  const baseSalesHref = params.q ? `/sales?q=${encodeURIComponent(params.q)}` : "/sales";
+  const baseSalesHref = buildRedirectUrl("/sales", {
+    q: params.q,
+    staff: params.staff,
+    status: params.status,
+  });
+  const salesStaffOptions = Array.from(new Set(allDeals.map((deal) => deal.handled_by))).sort();
+  const salesStatusOptions = [
+    "prospect",
+    "interview going",
+    "negotiation",
+    "deal closed",
+    "deal cancelled",
+  ] as const;
+  const salesSummary = [
+    { label: "Total Leads", value: deals.length, tone: "slate" },
+    { label: "Prospect", value: deals.filter((deal) => deal.status === "prospect").length, tone: "slate" },
+    { label: "Interview Going", value: deals.filter((deal) => deal.status === "interview going").length, tone: "amber" },
+    { label: "Negotiation", value: deals.filter((deal) => deal.status === "negotiation").length, tone: "sky" },
+    { label: "Deal Closed", value: deals.filter((deal) => deal.status === "deal closed").length, tone: "emerald" },
+    { label: "Deal Cancelled", value: deals.filter((deal) => deal.status === "deal cancelled").length, tone: "rose" },
+  ];
 
   return (
     <div className="space-y-6">
@@ -79,12 +108,30 @@ export default async function SalesPage({
           />
         </div>
 
-        <TableShell
-          title="Sales entries"
-          description="Update employer records fast and move them from prospect to closed deal."
-          actions={
-            <form className="flex w-full flex-col gap-3 sm:max-w-md sm:flex-row sm:items-center">
-              <div className="relative flex-1">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {salesSummary.map((item) => (
+            <Card key={item.label} className={cn(
+              item.tone === "amber" && "bg-amber-50/70",
+              item.tone === "sky" && "bg-sky-50/70",
+              item.tone === "emerald" && "bg-emerald-50/70",
+              item.tone === "rose" && "bg-rose-50/70",
+            )}>
+              <p className="text-sm text-slate-500">{item.label}</p>
+              <p className="mt-2 text-3xl font-semibold text-slate-950">{item.value}</p>
+            </Card>
+          ))}
+        </section>
+
+        <Card>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Filter sales</h3>
+              <p className="text-sm text-slate-500">
+                Search, filter by handler, and narrow down by sales stage in one place.
+              </p>
+            </div>
+            <form className="grid gap-3 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+              <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
                   name="q"
@@ -93,11 +140,37 @@ export default async function SalesPage({
                   className="pl-10"
                 />
               </div>
-              <Button type="submit" variant="secondary" className="w-full sm:w-auto">
-                Search
-              </Button>
+              <Select name="staff" defaultValue={params.staff ?? ""}>
+                <option value="">All staff</option>
+                {salesStaffOptions.map((staff) => (
+                  <option key={staff} value={staff}>
+                    {staff}
+                  </option>
+                ))}
+              </Select>
+              <Select name="status" defaultValue={params.status ?? ""}>
+                <option value="">All statuses</option>
+                {salesStatusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </Select>
+              <div className="flex gap-3">
+                <Button type="submit" variant="secondary">
+                  Apply
+                </Button>
+                <Link href="/sales" className={buttonClassName("ghost")}>
+                  Clear
+                </Link>
+              </div>
             </form>
-          }
+          </div>
+        </Card>
+
+        <TableShell
+          title="Sales entries"
+          description="Update employer records fast and move them from prospect to closed deal."
         >
           {deals.length === 0 ? (
             <EmptyState

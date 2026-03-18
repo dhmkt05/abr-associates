@@ -6,15 +6,17 @@ import { HelperForm } from "@/components/helpers/helper-form";
 import { TopHeader } from "@/components/layout/top-header";
 import { TableShell } from "@/components/table-shell";
 import { Button, buttonClassName } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FlashMessage } from "@/components/ui/flash-message";
-import { Input } from "@/components/ui/input";
+import { Input, Select } from "@/components/ui/input";
 import { RecordDetailsDialog } from "@/components/ui/record-details-dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { deleteHelperAction } from "@/lib/actions";
-import { getHelpers } from "@/lib/data";
+import { getAppData, getHelpers } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
+import { buildRedirectUrl, cn } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -26,6 +28,8 @@ export default async function HelpersPage({
 }: {
   searchParams: Promise<{
     q?: string;
+    staff?: string;
+    status?: string;
     edit?: string;
     view?: string;
     type?: "success" | "error";
@@ -34,11 +38,35 @@ export default async function HelpersPage({
 }) {
   await requirePageAccess("helpers");
   const params = await searchParams;
-  const helpers = await getHelpers(params.q);
+  const [{ helpers: allHelpers }, helpers] = await Promise.all([
+    getAppData(),
+    getHelpers(params.q, {
+      addedBy: params.staff,
+      status: params.status,
+    }),
+  ]);
   const helperToEdit = helpers.find((helper) => helper.id === params.edit);
   const helperToView = helpers.find((helper) => helper.id === params.view);
   const configured = isSupabaseConfigured();
-  const baseHelpersHref = params.q ? `/helpers?q=${encodeURIComponent(params.q)}` : "/helpers";
+  const baseHelpersHref = buildRedirectUrl("/helpers", {
+    q: params.q,
+    staff: params.staff,
+    status: params.status,
+  });
+  const helperStaffOptions = Array.from(new Set(allHelpers.map((helper) => helper.added_by))).sort();
+  const helperStatusOptions = Array.from(new Set(allHelpers.map((helper) => helper.status))).sort();
+  const availableCount = helpers.filter((helper) => {
+    const normalized = helper.status.trim().toLowerCase();
+    return normalized === "available" || normalized === "active";
+  }).length;
+  const placedCount = helpers.filter((helper) => helper.status.trim().toLowerCase() === "placed").length;
+  const missedCount = helpers.length - availableCount - placedCount;
+  const helperSummary = [
+    { label: "Total Helpers", value: helpers.length, tone: "slate" },
+    { label: "Active", value: availableCount, tone: "emerald" },
+    { label: "Placed", value: placedCount, tone: "sky" },
+    { label: "Missed", value: missedCount, tone: "amber" },
+  ];
 
   return (
     <div className="space-y-6">
@@ -76,12 +104,29 @@ export default async function HelpersPage({
           />
         </div>
 
-        <TableShell
-          title="Helpers"
-          description="Keep helper records short, searchable, and easy to maintain."
-          actions={
-            <form className="flex w-full flex-col gap-3 sm:max-w-md sm:flex-row sm:items-center">
-              <div className="relative flex-1">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {helperSummary.map((item) => (
+            <Card key={item.label} className={cn(
+              item.tone === "emerald" && "bg-emerald-50/70",
+              item.tone === "sky" && "bg-sky-50/70",
+              item.tone === "amber" && "bg-amber-50/70",
+            )}>
+              <p className="text-sm text-slate-500">{item.label}</p>
+              <p className="mt-2 text-3xl font-semibold text-slate-950">{item.value}</p>
+            </Card>
+          ))}
+        </section>
+
+        <Card>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Filter helpers</h3>
+              <p className="text-sm text-slate-500">
+                Combine search with staff and status filters to narrow the helper list.
+              </p>
+            </div>
+            <form className="grid gap-3 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+              <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
                   name="q"
@@ -90,11 +135,37 @@ export default async function HelpersPage({
                   className="pl-10"
                 />
               </div>
-              <Button type="submit" variant="secondary" className="w-full sm:w-auto">
-                Search
-              </Button>
+              <Select name="staff" defaultValue={params.staff ?? ""}>
+                <option value="">All staff</option>
+                {helperStaffOptions.map((staff) => (
+                  <option key={staff} value={staff}>
+                    {staff}
+                  </option>
+                ))}
+              </Select>
+              <Select name="status" defaultValue={params.status ?? ""}>
+                <option value="">All statuses</option>
+                {helperStatusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </Select>
+              <div className="flex gap-3">
+                <Button type="submit" variant="secondary">
+                  Apply
+                </Button>
+                <Link href="/helpers" className={buttonClassName("ghost")}>
+                  Clear
+                </Link>
+              </div>
             </form>
-          }
+          </div>
+        </Card>
+
+        <TableShell
+          title="Helpers"
+          description="Keep helper records short, searchable, and easy to maintain."
         >
           {helpers.length === 0 ? (
             <EmptyState
@@ -154,7 +225,7 @@ export default async function HelpersPage({
                       <form action={deleteHelperAction} className="w-full sm:w-auto">
                         <input type="hidden" name="id" value={helper.id} />
                         <input type="hidden" name="helper_name" value={helper.name} />
-                        <input type="hidden" name="redirect_to" value="/helpers" />
+                        <input type="hidden" name="redirect_to" value={baseHelpersHref} />
                         <ConfirmSubmitButton
                           variant="danger"
                           type="submit"
@@ -209,7 +280,7 @@ export default async function HelpersPage({
                           <form action={deleteHelperAction}>
                             <input type="hidden" name="id" value={helper.id} />
                             <input type="hidden" name="helper_name" value={helper.name} />
-                            <input type="hidden" name="redirect_to" value="/helpers" />
+                            <input type="hidden" name="redirect_to" value={baseHelpersHref} />
                             <ConfirmSubmitButton
                               variant="danger"
                               type="submit"
