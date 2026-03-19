@@ -30,9 +30,7 @@ export function DealForm({
 }) {
   const action = deal ? updateDealAction : createDealAction;
   const [status, setStatus] = useState<SalesStatus>(deal?.status ?? "prospect");
-  const [expectedDate, setExpectedDate] = useState(deal?.expected_date ?? "");
   const notesRequired = status === "deal cancelled";
-  const showExpectedDate = status === "deal closed";
 
   return (
     <FormSection
@@ -108,18 +106,6 @@ export function DealForm({
               ))}
             </Select>
           </label>
-          {showExpectedDate ? (
-            <label className="block md:col-span-2">
-              <span className="mb-2 block text-sm font-medium text-slate-700">Expected Date</span>
-              <Input
-                type="date"
-                name="expected_date"
-                value={expectedDate}
-                disabled={disabled}
-                onChange={(event) => setExpectedDate(event.target.value)}
-              />
-            </label>
-          ) : null}
           <label className="block md:col-span-2">
             <span className="mb-2 block text-sm font-medium text-slate-700">Notes / Reason</span>
             <Textarea

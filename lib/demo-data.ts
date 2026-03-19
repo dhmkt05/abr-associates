@@ -77,7 +77,6 @@ export const demoDeals: Deal[] = [
     handled_by: "Admin",
     status: "interview going",
     notes: "",
-    expected_date: null,
     created_at: "2026-03-11T07:45:00.000Z",
   },
   {
@@ -87,7 +86,6 @@ export const demoDeals: Deal[] = [
     handled_by: "Admin",
     status: "deal closed",
     notes: "",
-    expected_date: "2026-03-20",
     created_at: "2026-03-12T09:20:00.000Z",
   },
   {
@@ -97,7 +95,6 @@ export const demoDeals: Deal[] = [
     handled_by: "Admin",
     status: "negotiation",
     notes: "",
-    expected_date: null,
     created_at: "2026-03-15T12:00:00.000Z",
   },
 ];

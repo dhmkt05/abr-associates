@@ -67,7 +67,6 @@ export interface Deal {
   handled_by: string;
   status: SalesStatus;
   notes: string;
-  expected_date: string | null;
   created_at: string;
 }
 

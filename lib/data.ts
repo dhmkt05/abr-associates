@@ -96,7 +96,6 @@ function mapDeal(row: Record<string, unknown>): Deal {
     handled_by: String(row.handled_by ?? row.sales_staff ?? ""),
     status: normalizeSalesStatus(String(row.status ?? row.sales_stage ?? "")),
     notes: String(row.notes ?? ""),
-    expected_date: row.expected_date ? String(row.expected_date) : null,
     created_at: String(row.created_at ?? new Date().toISOString()),
   };
 }
