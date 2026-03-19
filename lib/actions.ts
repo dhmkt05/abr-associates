@@ -104,6 +104,11 @@ function getDealNotes(formData: FormData, status: string, redirectTo: string) {
   return notes;
 }
 
+function getExpectedDate(formData: FormData) {
+  const expectedDate = String(formData.get("expected_date") ?? "").trim();
+  return expectedDate || null;
+}
+
 export async function signOutAction() {
   const supabase = await getSupabaseServerClient();
 
@@ -229,6 +234,7 @@ export async function createDealAction(formData: FormData) {
   const handledBy = String(formData.get("handled_by") ?? "Admin");
   const status = String(formData.get("status") ?? "prospect");
   const notes = getDealNotes(formData, status, redirectTo);
+  const expectedDate = getExpectedDate(formData);
 
   const { data: employer, error: employerError } = await supabase!
       .from("employers")
@@ -260,8 +266,9 @@ export async function createDealAction(formData: FormData) {
       handled_by: handledBy,
       status,
       notes,
+      ...(status === "deal closed" ? { expected_date: expectedDate } : {}),
     })
-    .select("id,status,notes")
+    .select("id,status,notes,expected_date")
     .single();
 
   revalidateDashboardRoutes();
@@ -303,6 +310,7 @@ export async function updateDealAction(formData: FormData) {
   const handledBy = String(formData.get("handled_by") ?? "Admin");
   const employerName = String(formData.get("employer_name") ?? "");
   const notes = getDealNotes(formData, status, redirectTo);
+  const expectedDate = getExpectedDate(formData);
 
   const { error: employerError } = await supabase!
     .from("employers")
@@ -325,6 +333,7 @@ export async function updateDealAction(formData: FormData) {
       handled_by: handledBy,
       status,
       notes,
+      ...(status === "deal closed" ? { expected_date: expectedDate } : {}),
     })
     .eq("id", id);
 

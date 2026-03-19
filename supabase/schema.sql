@@ -28,6 +28,7 @@ create table if not exists public.deals (
   handled_by text not null default 'Admin',
   status text not null default 'prospect',
   notes text not null default '',
+  expected_date date,
   created_at timestamptz not null default now()
 );
 

@@ -83,6 +83,10 @@ export default async function SalesPage({
             { label: "Handled by", value: dealToView.handled_by },
             { label: "Status", value: <StatusBadge status={dealToView.status} /> },
             {
+              label: "Expected date",
+              value: dealToView.expected_date ? formatDate(dealToView.expected_date) : "-",
+            },
+            {
               label: "Notes",
               value: <div className="whitespace-pre-wrap">{dealToView.notes || "No notes"}</div>,
             },
@@ -207,6 +211,12 @@ export default async function SalesPage({
                         <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Created</p>
                         <p className="mt-1 font-medium text-slate-900">{formatDate(deal.created_at)}</p>
                       </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Expected Date</p>
+                        <p className="mt-1 font-medium text-slate-900">
+                          {deal.expected_date ? formatDate(deal.expected_date) : "-"}
+                        </p>
+                      </div>
                       <div className="col-span-2">
                         <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Notes</p>
                         <p className="mt-1 line-clamp-2 font-medium text-slate-900" title={deal.notes || "No notes"}>
@@ -245,7 +255,7 @@ export default async function SalesPage({
               <table className="hidden min-w-full text-left text-sm lg:table">
                 <thead className="text-xs uppercase tracking-[0.18em] text-slate-400">
                   <tr>
-                    {["Employer ID", "Employer Name", "Employer Number", "Handled By", "Status", "Notes", "Created", "Actions"].map((head) => (
+                    {["Employer ID", "Employer Name", "Employer Number", "Handled By", "Status", "Expected Date", "Notes", "Created", "Actions"].map((head) => (
                       <th key={head} className="px-3 py-3 font-medium">
                         {head}
                       </th>
@@ -262,6 +272,7 @@ export default async function SalesPage({
                       <td className="px-3 py-4">
                         <StatusBadge status={deal.status} />
                       </td>
+                      <td className="px-3 py-4">{deal.expected_date ? formatDate(deal.expected_date) : "-"}</td>
                       <td className="max-w-52 px-3 py-4">
                         <span className="block truncate" title={deal.notes || "No notes"}>
                           {deal.notes || "No notes"}
